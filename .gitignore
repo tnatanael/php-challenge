@@ -4,6 +4,7 @@
 /vendor/
 /logs/*
 php-errors.log
+consumer.log
 .phpunit.result.cache
 .env
 !.env.sample

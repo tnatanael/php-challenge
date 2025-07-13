@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Controllers\HelloController;
 use App\Controllers\UserController;
 use App\Controllers\AuthController;
+use App\Controllers\StockController;
 use App\Middleware\JwtMiddleware;
 use Slim\App;
 
@@ -16,6 +17,12 @@ return function (App $app) {
     
     // authentication routes
     $app->post('/auth/login', AuthController::class . ':login');
+
+    // stock routes
+    $app->get('/stock', StockController::class . ':getStock')
+        ->add(JwtMiddleware::class);
+    $app->get('/history', StockController::class . ':getHistory')
+        ->add(JwtMiddleware::class);
     
     // You can also protect groups of routes
     $app->group('/users', function ($group) {

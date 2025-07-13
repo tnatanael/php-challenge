@@ -116,7 +116,7 @@ class UserController
         path: "/users/{id}",
         summary: "Get a user by ID",
         tags: ["Users"],
-        security: [new OA\SecurityScheme(name: "bearerAuth")]
+        security: [["bearerAuth" => []]]
     )]
     #[OA\Parameter(
         name: "id",
@@ -163,7 +163,7 @@ class UserController
         path: "/users/{id}",
         summary: "Update a user",
         tags: ["Users"],
-        security: [new OA\SecurityScheme(name: "bearerAuth")]
+        security: [["bearerAuth" => []]]
     )]
     #[OA\Parameter(
         name: "id",
@@ -239,7 +239,7 @@ class UserController
         path: "/users/{id}",
         summary: "Delete a user",
         tags: ["Users"],
-        security: [new OA\SecurityScheme(name: "bearerAuth")]
+        security: [["bearerAuth" => []]]
     )]
     #[OA\Parameter(
         name: "id",

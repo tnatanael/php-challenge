@@ -29,5 +29,30 @@ fi
 # Run migrations
 php ./migrate run
 
+# Wait for RabbitMQ to be ready if enabled
+if [ "$RMQ_ENABLED" = "1" ]; then
+    echo "Waiting for RabbitMQ to be ready..."
+    
+    # Skip the port check since Docker Compose already waited for RabbitMQ to be healthy
+    echo "RabbitMQ should be ready (Docker Compose healthcheck passed)"
+    
+    # Start the email consumer in the background
+    echo "Starting email consumer in background..."
+    touch ./consumer.log  # Ensure the log file exists
+    chmod 666 ./consumer.log  # Make it writable
+    nohup php ./email-consumer.php > ./consumer.log 2>&1 &
+    CONSUMER_PID=$!
+    echo "Email consumer started with PID $CONSUMER_PID"
+    
+    # Check if the consumer is actually running after a short delay
+    sleep 2
+    if ps -p $CONSUMER_PID > /dev/null; then
+        echo "Email consumer is running successfully."
+    else
+        echo "Warning: Email consumer may have failed to start. Check consumer.log for details."
+        cat ./consumer.log
+    fi
+fi
+
 # Start PHP-FPM
 exec php-fpm

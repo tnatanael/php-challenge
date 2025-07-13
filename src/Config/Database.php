@@ -98,11 +98,25 @@ class Database
             $table->string('password');
             $table->timestamps();
         });
+
+        // Create a default user for testing
+        $capsule->table('users')->insert([
+            'id' => 1,
+            'email' => $_ENV['ADMIN_USERNAME'] ?? 'user@example.com',
+            'password' => password_hash($_ENV['ADMIN_PASSWORD'] ?? 'secret', PASSWORD_DEFAULT),
+            'created_at' => date('Y-m-d H:i:s'),
+            'updated_at' => date('Y-m-d H:i:s'),
+        ]);
         
         $capsule->schema()->create('stock_queries', function ($table) {
             $table->increments('id');
             $table->integer('user_id')->unsigned();
             $table->string('symbol');
+            $table->string('name')->nullable();
+            $table->decimal('open', 10, 2)->nullable();
+            $table->decimal('high', 10, 2)->nullable();
+            $table->decimal('low', 10, 2)->nullable();
+            $table->decimal('close', 10, 2)->nullable();
             $table->timestamps();
             
             $table->foreign('user_id')->references('id')->on('users');

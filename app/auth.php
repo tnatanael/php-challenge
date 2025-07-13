@@ -11,6 +11,7 @@ return function (App $app) {
     // Only keep the middleware to throw 401 with correct slim exception
     $app->add(function (Request $request, RequestHandler $handler) {
         $response = $handler->handle($request);
+                
         $statusCode = $response->getStatusCode();
 
         if ($statusCode == 401) {

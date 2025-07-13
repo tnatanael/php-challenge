@@ -56,6 +56,7 @@ class JwtMiddleware implements MiddlewareInterface
             // Add the decoded token to the request attributes
             $request = $request->withAttribute('jwt', $decoded);
             $request = $request->withAttribute('user_id', $decoded->user_id);
+            $request = $request->withAttribute('email', $decoded->email);
             
             // Continue with the request
             return $handler->handle($request);

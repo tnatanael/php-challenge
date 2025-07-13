@@ -94,15 +94,22 @@ class BaseTestCase extends PHPUnit_TestCase
         array $cookies = [],
         array $serverParams = []
     ): Request {
-        $uri = new Uri('', 'localhost', 80, $path);
+        // Parse path and query string
+        $parsed = parse_url('http://example.com' . $path);
+        $uriPath = $parsed['path'] ?? '/';
+        $query = $parsed['query'] ?? '';
+    
+        $uri = new Uri('', 'localhost', 80, $uriPath);
+        $uri = $uri->withQuery($query);
+    
         $handle = fopen('php://temp', 'w+');
         $stream = (new StreamFactory())->createStreamFromResource($handle);
-
+    
         $h = new Headers();
         foreach ($headers as $name => $value) {
             $h->addHeader($name, $value);
         }
-
+    
         return new SlimRequest($method, $uri, $h, $cookies, $serverParams, $stream);
     }
 }

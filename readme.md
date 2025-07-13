@@ -44,6 +44,34 @@ This project uses OpenAPI/Swagger for API documentation. You can access the docu
 - JSON format: http://localhost:8080/api/documentation
 - Swagger UI: http://localhost:8080/swagger
 
+## Email System
+
+The application includes an email system that uses RabbitMQ for asynchronous email processing:
+
+1. **Email Configuration**: Configure your email settings in the `.env` file:
+   ```
+   # Email Settings
+   MAILER_DSN=smtp://username:password@smtp.example.com:587
+   MAILER_FROM=your-email@example.com
+   MAILER_FROM_NAME="Stock API"
+   MAILER_ENABLED=1
+   ```
+
+2. **RabbitMQ Integration**: The system uses RabbitMQ to queue and process emails asynchronously:
+   ```
+   # RabbitMQ Settings
+   RMQ_ENABLED=1  # Set to 1 to enable RabbitMQ
+   RMQ_HOST=rabbitmq
+   RMQ_VHOST=/
+   RMQ_PORT=5672
+   RMQ_USERNAME=guest
+   RMQ_PASSWORD=guest
+   ```
+
+3. **Email Consumer**: The application includes an email consumer service that processes emails from the queue. This service runs automatically when the Docker container starts if RabbitMQ is enabled.
+
+4. **Stock API Email Notifications**: When users query stock information, the system can send email notifications with the stock data. The emails are queued in RabbitMQ and processed asynchronously by the email consumer service.
+
 ## Available Endpoints
 
 ### Public Endpoints
