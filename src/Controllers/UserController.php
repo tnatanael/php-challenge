@@ -24,11 +24,16 @@ class UserController
         path: "/users",
         summary: "Get all users",
         tags: ["Users"],
+        security: [['bearerAuth' => []]]
     )]
     #[OA\Response(
         response: 200,
         description: "Returns a list of all users",
         content: new OA\JsonContent(type: "array", items: new OA\Items(ref: "#/components/schemas/User"))
+    )]
+    #[OA\Response(
+        response: 401,
+        description: "Unauthorized - JWT token missing or invalid"
     )]
     public function getAll(Request $request, Response $response): Response
     {
@@ -46,6 +51,7 @@ class UserController
         path: "/users",
         summary: "Create a new user",
         tags: ["Users"],
+        security: [['bearerAuth' => []]]
     )]
     #[OA\RequestBody(
         required: true,
@@ -59,6 +65,10 @@ class UserController
     #[OA\Response(
         response: 400,
         description: "Bad request"
+    )]
+    #[OA\Response(
+        response: 401,
+        description: "Unauthorized - JWT token missing or invalid"
     )]
     public function create(Request $request, Response $response): Response
     {
@@ -106,6 +116,7 @@ class UserController
         path: "/users/{id}",
         summary: "Get a user by ID",
         tags: ["Users"],
+        security: [new OA\SecurityScheme(name: "bearerAuth")]
     )]
     #[OA\Parameter(
         name: "id",
@@ -121,6 +132,10 @@ class UserController
     #[OA\Response(
         response: 404,
         description: "User not found"
+    )]
+    #[OA\Response(
+        response: 401,
+        description: "Unauthorized - JWT token missing or invalid"
     )]
     public function getOne(Request $request, Response $response, array $args): Response
     {
@@ -148,6 +163,7 @@ class UserController
         path: "/users/{id}",
         summary: "Update a user",
         tags: ["Users"],
+        security: [new OA\SecurityScheme(name: "bearerAuth")]
     )]
     #[OA\Parameter(
         name: "id",
@@ -167,6 +183,10 @@ class UserController
     #[OA\Response(
         response: 404,
         description: "User not found"
+    )]
+    #[OA\Response(
+        response: 401,
+        description: "Unauthorized - JWT token missing or invalid"
     )]
     public function update(Request $request, Response $response, array $args): Response
     {
@@ -219,6 +239,7 @@ class UserController
         path: "/users/{id}",
         summary: "Delete a user",
         tags: ["Users"],
+        security: [new OA\SecurityScheme(name: "bearerAuth")]
     )]
     #[OA\Parameter(
         name: "id",
@@ -233,6 +254,10 @@ class UserController
     #[OA\Response(
         response: 404,
         description: "User not found"
+    )]
+    #[OA\Response(
+        response: 401,
+        description: "Unauthorized - JWT token missing or invalid"
     )]
     public function delete(Request $request, Response $response, array $args): Response
     {

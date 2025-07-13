@@ -52,10 +52,11 @@ class HelloTest extends BaseTestCase
         $response = $this->app->handle($request);
     }
 
-    public function testByeEndpointWithBasicAuth()
+    public function testByeEndpointWithJwtAuth()
     {
         // Arrange
-        $headers = ['HTTP_ACCEPT' => 'application/json', 'Authorization' => $this->getAuthorizationHeader()];
+        $token = $this->getJwtToken();
+        $headers = ['HTTP_ACCEPT' => 'application/json', 'Authorization' => 'Bearer ' . $token];
         $request = $this->createRequest('GET', '/bye/My Name', $headers);
 
         // Act

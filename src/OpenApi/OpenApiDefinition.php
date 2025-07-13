@@ -23,10 +23,11 @@ use OpenApi\Attributes as OA;
     description: "API Server"
 )]
 #[OA\SecurityScheme(
-    securityScheme: "basicAuth",
+    securityScheme: "bearerAuth",
     type: "http",
-    scheme: "basic",
-    description: "Basic Authentication"
+    scheme: "bearer",
+    bearerFormat: "JWT",
+    description: "JWT Authentication"
 )]
 class OpenApiDefinition
 {

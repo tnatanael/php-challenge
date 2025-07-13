@@ -6,6 +6,7 @@ namespace App\Database\Schema\Commands;
 
 use App\Config\Database;
 use App\Database\Schema\MigrationRunner;
+use App\Database\Schema\SeederRunner;
 use App\Database\Schema\Migrations\CreateMigrationsTable;
 
 class MigrateCommand
@@ -28,6 +29,29 @@ class MigrateCommand
         $migrationRunner->up();
         
         echo "Migration process completed.\n";
+        
+        // Run seeders
+        self::seed();
+    }
+    
+    /**
+     * Run all seeders
+     */
+    public static function seed(): void
+    {
+        // Initialize Eloquent if not already initialized
+        Database::boot();
+
+        // Run seeders
+        $seederRunner = new SeederRunner();
+
+        // Scan for seeders
+        $seederRunner->scanSeeders(__DIR__ . '/../../Schema/Seeders');
+
+        // Run all seeders
+        $seederRunner->run();
+        
+        echo "Seeding process completed.\n";
     }
     
     /**

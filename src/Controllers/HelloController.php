@@ -48,7 +48,7 @@ class HelloController
         path: "/bye/{name}",
         summary: "Get a goodbye message",
         tags: ["Greetings"],
-        security: [['basicAuth' => []]]
+        security: [['bearerAuth' => []]]
     )]
     #[OA\Parameter(
         name: "name",

@@ -4,21 +4,28 @@ declare(strict_types=1);
 
 use App\Controllers\HelloController;
 use App\Controllers\UserController;
+use App\Controllers\AuthController;
+use App\Middleware\JwtMiddleware;
 use Slim\App;
 
 return function (App $app) {
     // unprotected routes
     $app->get('/hello/{name}', HelloController::class . ':hello');
+    $app->get('/bye/{name}', HelloController::class . ':bye')
+        ->add(JwtMiddleware::class);
     
-    // user routes
-    $app->get('/users', UserController::class . ':getAll');
-    $app->post('/users', UserController::class . ':create');
-    $app->get('/users/{id}', UserController::class . ':getOne');
-    $app->put('/users/{id}', UserController::class . ':update');
-    $app->delete('/users/{id}', UserController::class . ':delete');
-
-    // protected routes
-    $app->get('/bye/{name}', HelloController::class . ':bye');
+    // authentication routes
+    $app->post('/auth/login', AuthController::class . ':login');
+    
+    // You can also protect groups of routes
+    $app->group('/users', function ($group) {
+        // user routes
+        $group->get('', UserController::class . ':getAll');
+        $group->post('', UserController::class . ':create');
+        $group->get('/{id}', UserController::class . ':getOne');
+        $group->put('/{id}', UserController::class . ':update');
+        $group->delete('/{id}', UserController::class . ':delete');
+    })->add(JwtMiddleware::class);
     
     // OpenAPI documentation
     $app->get('/api/documentation', function ($request, $response) {

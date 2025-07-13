@@ -6,6 +6,7 @@ namespace Tests;
 
 use DI\ContainerBuilder;
 use Exception;
+use Firebase\JWT\JWT;
 use PHPUnit\Framework\TestCase as PHPUnit_TestCase;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\App;
@@ -49,15 +50,26 @@ class BaseTestCase extends PHPUnit_TestCase
     }
 
     /**
+     * Generate a JWT token for testing protected endpoints
+     * 
      * @return String
      */
-    protected function getAuthorizationHeader(): String
+    protected function getJwtToken(): String
     {
-        $adminTestingUsername = $_ENV["ADMIN_USERNAME"];
-        $adminTestingPassword = $_ENV["ADMIN_PASSWORD"];
-
-
-        return 'Basic ' . base64_encode("$adminTestingUsername:$adminTestingPassword");
+        $jwtSecret = $_ENV["JWT_SECRET"] ?? 'your-secret-key';
+        $jwtExpirationTime = (int)($_ENV['JWT_EXPIRATION'] ?? 3600);
+        
+        $issuedAt = time();
+        $expirationTime = $issuedAt + $jwtExpirationTime;
+        
+        $payload = [
+            'iat' => $issuedAt,
+            'exp' => $expirationTime,
+            'user_id' => 1, // Assuming admin user has ID 1
+            'email' => $_ENV["ADMIN_USERNAME"],
+        ];
+        
+        return JWT::encode($payload, $jwtSecret, 'HS256');
     }
 
     /**
