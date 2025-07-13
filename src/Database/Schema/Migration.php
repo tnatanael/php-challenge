@@ -9,15 +9,15 @@ interface Migration
     /**
      * Get the migration name
      */
-    public static function getName(): string;
+    public function getName(): string;
     
     /**
      * Run the migration
      */
-    public static function up(): void;
+    public function up(): void;
 
     /**
      * Reverse the migration
      */
-    public static function down(): void;
+    public function down(): void;
 }

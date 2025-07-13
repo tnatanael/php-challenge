@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests;
 
+use App\Config\Database;
 use DI\ContainerBuilder;
 use Exception;
 use Firebase\JWT\JWT;
@@ -32,6 +33,9 @@ class BaseTestCase extends PHPUnit_TestCase
         $dotenv = new Dotenv();
         $dotenv->load(__DIR__ . '/../.env');
 
+        // Initialize in-memory test database
+        Database::bootTestDatabase();
+
         $dependencies = require __DIR__ . '/../app/services.php';
         $dependencies($containerBuilder);
 
@@ -39,6 +43,9 @@ class BaseTestCase extends PHPUnit_TestCase
         AppFactory::setContainer($container);
 
         $app = AppFactory::create();
+
+        // Add body parsing middleware
+        $app->addBodyParsingMiddleware();
 
         $routes = require __DIR__ . '/../app/routes.php';
         $routes($app);

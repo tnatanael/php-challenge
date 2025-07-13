@@ -5,6 +5,7 @@
         beStrictAboutOutputDuringTests="true"
         colors="true"
         bootstrap="vendor/autoload.php"
+        cacheResultFile="/tmp/.phpunit.result.cache"
 >
     <testsuites>
         <testsuite name="Test Suite">

@@ -2,20 +2,18 @@
 
 declare(strict_types=1);
 
-namespace App\Database\Schema\Migrations;
-
 use App\Database\Schema\Migration;
 use Illuminate\Database\Capsule\Manager as Capsule;
 use Illuminate\Database\Schema\Blueprint;
 
-class CreateStockQueriesTable implements Migration
+return new class implements Migration
 {
-    public static function getName(): string
+    public function getName(): string
     {
         return 'create_stock_queries_table';
     }
     
-    public static function up(): void
+    public function up(): void
     {
         if (!Capsule::schema()->hasTable('stock_queries')) {
             Capsule::schema()->create('stock_queries', function (Blueprint $table) {
@@ -32,8 +30,8 @@ class CreateStockQueriesTable implements Migration
         }
     }
 
-    public static function down(): void
+    public function down(): void
     {
         Capsule::schema()->dropIfExists('stock_queries');
     }
-}
+};

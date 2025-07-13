@@ -7,7 +7,6 @@ namespace App\Database\Schema\Commands;
 use App\Config\Database;
 use App\Database\Schema\MigrationRunner;
 use App\Database\Schema\SeederRunner;
-use App\Database\Schema\Migrations\CreateMigrationsTable;
 
 class MigrateCommand
 {

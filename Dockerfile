@@ -10,13 +10,14 @@ RUN apt-get update && apt-get install -y \
     libxml2-dev \
     zip \
     unzip \
-    default-mysql-client
+    default-mysql-client \
+    libsqlite3-dev
 
 # Clear cache
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Install PHP extensions
-RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath sockets
+RUN docker-php-ext-install pdo_mysql pdo_sqlite mbstring exif pcntl bcmath sockets
 
 # Add custom PHP configuration
 COPY php-custom.ini /usr/local/etc/php/conf.d/php-custom.ini

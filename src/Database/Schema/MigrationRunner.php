@@ -13,19 +13,23 @@ use RegexIterator;
 class MigrationRunner
 {
     /**
-     * @var array<class-string<Migration>>
+     * @var array<Migration>
      */
     private array $migrations = [];
 
     /**
-     * Register a migration class
+     * Register a migration instance
      *
-     * @param class-string<Migration> $migrationClass
+     * @param Migration $migration
+     * @param string $filename
      * @return self
      */
-    public function register(string $migrationClass): self
+    public function registerInstance(Migration $migration, string $filename): self
     {
-        $this->migrations[] = $migrationClass;
+        $this->migrations[] = [
+            'instance' => $migration,
+            'filename' => $filename
+        ];
         return $this;
     }
 
@@ -69,7 +73,23 @@ class MigrationRunner
     }
 
     /**
-     * Scan the Migrations directory for migration classes
+     * Extract timestamp from migration filename
+     * 
+     * @param string $filename The migration filename
+     * @return string The timestamp or '0' if no timestamp found
+     */
+    private function extractTimestamp(string $filename): string
+    {
+        // Extract timestamp from format like "YYYY_MM_DD_HHMMSS_MigrationName"
+        if (preg_match('/^(\d{4}_\d{2}_\d{2}_\d{6})_/', $filename, $matches)) {
+            return str_replace('_', '', $matches[1]);
+        }
+        
+        return '0'; // Default timestamp for migrations without timestamp prefix
+    }
+
+    /**
+     * Scan the Migrations directory for migration files and require them
      */
     public function scanMigrations(string $directory = null): self
     {
@@ -92,16 +112,27 @@ class MigrationRunner
         $count = 0;
         
         foreach ($phpFiles as $phpFile) {
-            $className = pathinfo($phpFile->getPathname(), PATHINFO_FILENAME);
-            $namespace = 'App\\Database\\Schema\\Migrations\\' . $className;
+            $filename = pathinfo($phpFile->getPathname(), PATHINFO_FILENAME);
+            $filepath = $phpFile->getPathname();
             
-            if (class_exists($namespace) && is_subclass_of($namespace, Migration::class)) {
-                $this->register($namespace);
+            // Require the file which should return a Migration instance
+            $migration = require $filepath;
+            
+            if ($migration instanceof Migration) {
+                $this->registerInstance($migration, $filename);
                 $count++;
             }
         }
         
         echo "Found {$count} migration(s).\n";
+        
+        // Sort migrations by timestamp
+        usort($this->migrations, function ($a, $b) {
+            $timestampA = $this->extractTimestamp($a['filename']);
+            $timestampB = $this->extractTimestamp($b['filename']);
+            
+            return $timestampA <=> $timestampB;
+        });
         
         return $this;
     }
@@ -119,17 +150,18 @@ class MigrationRunner
         $skippedCount = 0;
         
         foreach ($this->migrations as $migration) {
-            $migrationName = $migration::getName();
-            $shortName = (new \ReflectionClass($migration))->getShortName();
+            $instance = $migration['instance'];
+            $filename = $migration['filename'];
+            $migrationName = $instance->getName();
             
             if (!$this->hasMigrationRun($migrationName)) {
-                echo "Running migration: {$shortName}\n";
-                $migration::up();
+                echo "Running migration: {$filename}\n";
+                $instance->up();
                 $this->recordMigration($migrationName);
-                echo "Migration completed: {$shortName}\n";
+                echo "Migration completed: {$filename}\n";
                 $ranCount++;
             } else {
-                echo "Skipping migration (already run): {$shortName}\n";
+                echo "Skipping migration (already run): {$filename}\n";
                 $skippedCount++;
             }
         }
@@ -147,19 +179,20 @@ class MigrationRunner
         $skippedCount = 0;
         
         foreach (array_reverse($this->migrations) as $migration) {
-            $migrationName = $migration::getName();
-            $shortName = (new \ReflectionClass($migration))->getShortName();
+            $instance = $migration['instance'];
+            $filename = $migration['filename'];
+            $migrationName = $instance->getName();
             
             if ($this->hasMigrationRun($migrationName)) {
-                echo "Reversing migration: {$shortName}\n";
-                $migration::down();
+                echo "Reversing migration: {$filename}\n";
+                $instance->down();
                 Capsule::table('migrations')
                     ->where('migration', $migrationName)
                     ->delete();
-                echo "Migration reversed: {$shortName}\n";
+                echo "Migration reversed: {$filename}\n";
                 $ranCount++;
             } else {
-                echo "Skipping reversal (not previously run): {$shortName}\n";
+                echo "Skipping reversal (not previously run): {$filename}\n";
                 $skippedCount++;
             }
         }

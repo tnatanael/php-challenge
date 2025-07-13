@@ -3,6 +3,7 @@
 /coverage/
 /vendor/
 /logs/*
+php-errors.log
 .phpunit.result.cache
 .env
 !.env.sample

@@ -63,8 +63,8 @@ The API uses JWT (JSON Web Token) authentication for protected endpoints. To acc
    ```
    POST /auth/login
    {
-     "email": "admin@example.com",
-     "password": "secret"
+     "email": "user@example.com",
+     "password": "user123"
    }
    ```
 
@@ -84,8 +84,8 @@ The API uses JWT (JSON Web Token) authentication for protected endpoints. To acc
 
 A default admin user is automatically created during the first application startup if no users exist in the database:
 
-- Email: `admin@example.com`
-- Password: `secret`
+- Email: `user@example.com`
+- Password: `user123`
 
 These credentials are defined in the `.env` file as `ADMIN_USERNAME` and `ADMIN_PASSWORD`.
 
