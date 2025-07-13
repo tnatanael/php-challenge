@@ -1,73 +1,127 @@
-<div align="center">
-    <img src="https://media.licdn.com/dms/image/D4E0BAQETyObSEmZH-A/company-logo_200_200/0/1693956448491/jobsity_llc_logo?e=1723075200&v=beta&t=rGq4fY1cprFyIaSabim0_bgb-QLCbJUk6Es9dXuua1w"/>
-</div>
+# PHP Challenge - Stock API
 
-## Description
-This Challenge is designed to test your abilities building backend web projects in PHP. Show us your best skills and knowledge in good practices and standards.
+A REST API for tracking stock market values built with Slim Framework 4, PHP 8.2, and MySQL.
 
-## Assignment
-The objective of this challenge is to create a REST API application that the user can use to track the value of stocks in the stock market. The base for your application as presented here uses a simple implementation of [Slim Framework](https://www.slimframework.com/docs/v3/)
+## Project Overview
 
-You may use the [Stooq](https://stooq.com/q) API service to get latest stock market values. Check the format used below. You can replace the `{stock_code}` placeholder with the corresponding stock code:
+This project is a RESTful API that provides endpoints for tracking stock market values. It's built using:
 
-`https://stooq.com/q/l/?s={stock_code}&f=sd2t2ohlcvn&h&e=csv`
+- PHP 8.2
+- Slim Framework 4
+- MySQL 8.0
+- Docker and Docker Compose
+- OpenAPI/Swagger for API documentation
 
-## Mandatory Features
- - You will need to **record a video explaining the code** you created, the decisions you made, its functionality, and demonstrating the complete operation of the challenge. _Remember to show the execution from scratch, it should not be running beforehand._
+## Getting Started
 
-- The application must use a SQL database to store users and record logs of past requests. Check out the Slim documentation if you would like to use [Eloquent](https://www.slimframework.com/docs/v3/cookbook/database-eloquent.html), [Doctrine](https://www.slimframework.com/docs/v3/cookbook/database-doctrine.html) or [Atlas](https://www.slimframework.com/docs/v3/cookbook/database-atlas.html).
-- The application must be able to authenticate registered users. There's a basic example of authentication used for 1 endpoint, you may need to modify it accordingly based on the requirements. (See: [routes.php](https://git.jobsity.com/jobsity/php-challenge/-/blob/master/app/routes.php))
+### Prerequisites
 
-The application must have these three endpoints:
+- Docker and Docker Compose installed on your system
+- Git (optional, for cloning the repository)
 
- - An endpoint to create a new User, storing the email and information to log in later.
- - An endpoint to request a stock quote, like this:
+### Setup Instructions
 
-`GET /stock?q=aapl.us`
+1. Clone or download this repository to your local machine
 
+2. Create a `.env` file in the project root (you can copy from `.env.sample`)
+
+   ```bash
+   cp .env.sample .env
+   ```
+
+3. Build and start the Docker containers
+
+   ```bash
+   docker-compose up -d
+   ```
+
+4. The API will be available at http://localhost:8080
+
+## API Documentation
+
+This project uses OpenAPI/Swagger for API documentation. You can access the documentation at:
+
+- JSON format: http://localhost:8080/api/documentation
+- Swagger UI: http://localhost:8080/swagger
+
+## Available Endpoints
+
+### Public Endpoints
+
+- `GET /hello/{name}` - Returns a greeting message
+
+### Protected Endpoints (Basic Authentication)
+
+- `GET /bye/{name}` - Returns a goodbye message
+
+### Authentication
+
+Protected endpoints require Basic Authentication. Use the following credentials for testing:
+
+- Username: `root`
+- Password: `secret`
+
+These credentials are defined in the `.env` file as `ADMIN_USERNAME` and `ADMIN_PASSWORD`.
+
+## Running Tests
+
+The project includes PHPUnit tests that can be run within the Docker environment.
+
+### Running All Tests
+
+```bash
+docker-compose exec app vendor/bin/phpunit
 ```
-  {
-  "name": "APPLE",
-  "symbol": "AAPL.US",
-  "open": 123.66,
-  "high": 123.66,
-  "low": 122.49,
-  "close": 123
-  }
+
+### Running a Specific Test File
+
+```bash
+docker-compose exec app vendor/bin/phpunit tests/HelloTest.php
 ```
 
-The same endpoint must additionally send an email with the same information to the user who requested the quote. To send the email, you may use [SwiftMailer](https://swiftmailer.symfony.com/docs/introduction.html) with [the wrapper included](https://git.jobsity.com/jobsity/php-challenge/-/blob/master/app/services.php), as we detail in [this example](https://git.jobsity.com/jobsity/php-challenge/-/wikis/Usage-of-the-Mailer-service-(SwiftMailer)), or use your own implementation.
- - An endpoint to retrieve the history of queries made to the API service by that user. The endpoint should return the list of entries saved in the database, showing the latest entries first:
+### Running a Specific Test Method
 
-`GET /history`
-
-```
-[
-    {"date": "2021-04-01T19:20:30Z", "name": "APPLE", "symbol": "AAPL.US", "open": "123.66", "high": 123.66, "low": 122.49, "close": "123"},
-    {"date": "2021-03-25T11:10:55Z", "name": "APPLE", "symbol": "AAPL.US", "open": "121.10", "high": 123.66, "low": 122, "close": "122"},
-    ...
-]
+```bash
+docker-compose exec app vendor/bin/phpunit --filter testHelloEndpoint tests/HelloTest.php
 ```
 
-## Bonus features
-The following features are optional to implement, but if you do, you'll be ranked higher in our evaluation process.
+Available test methods:
+- `testHelloEndpoint` - Tests the public hello endpoint
+- `testByeEndpointThrowsUnauthorized` - Tests that the bye endpoint requires authentication
+- `testByeEndpointWithBasicAuth` - Tests the bye endpoint with valid authentication
 
- - Add unit tests for the endpoints.
- - Use RabbitMQ to send the email asynchronously.
- - Use JWT instead of basic authentication for endpoints.
- - Containerize the app.
+## Project Structure
 
-## Considerations
- - Focus only on the backend. We will not review any frontend functionality for this project.
- - Provide any and all information our evaluators may need. Use seeders instead of SQL dumps if we need any predetermined database information.
- - Provide a detailed Readme with instructions on how to install, use, etc.
+- `app/` - Application configuration and setup
+  - `routes.php` - API route definitions
+  - `services.php` - Dependency injection container configuration
+  - `auth.php` - Authentication middleware setup
+- `public/` - Web server entry point
+  - `index.php` - Application entry point
+  - `swagger-ui.php` - Swagger UI configuration
+- `src/` - Application source code
+  - `Controllers/` - API endpoint controllers
+  - `Models/` - Database models
+  - `OpenApi/` - OpenAPI documentation definitions
+- `tests/` - PHPUnit tests
 
-## Base project
-You can find some bootstrap for the challenge with some endpoints, basic setup, and tests. This project uses composer as a package manager, so in order to run the project for the first time you need to follow these next steps:
+## Development
 
-- Run `composer install`, this will install dependencies
-- Copy the `.env.sample` file into `.env` and modify its contents to match your current settings.
-- Run `composer start` and you should be able to check the project running on `http://localhost:8080`
+### Rebuilding Containers
 
-Optional:
-- Run `composer test` to see the test suite result
+If you make changes to the Dockerfile or docker-compose.yml, rebuild the containers:
+
+```bash
+docker-compose down
+docker-compose up -d --build
+```
+
+### Accessing Logs
+
+View logs from the containers:
+
+```bash
+docker-compose logs -f
+```
+
+PHP error logs are available in the `php-errors.log` file in the project root.
