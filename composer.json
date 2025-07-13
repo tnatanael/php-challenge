@@ -11,7 +11,13 @@
         "symfony/dotenv": "^5.2",
         "tuupola/slim-basic-auth": "^3.3",
         "php-amqplib/php-amqplib": "^3.0",
-        "ext-json": "*"
+        "ext-json": "*",
+        "illuminate/database": "^12.20",
+        "illuminate/events": "^12.20",
+        "illuminate/container": "^12.20",
+        "illuminate/support": "^12.20",
+        "zircote/swagger-php": "^5.1",
+        "symfony/var-dumper": "^7.3"
     },
     "scripts": {
         "start": "php -S localhost:8080 -t public",
