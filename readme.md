@@ -63,6 +63,111 @@ Protected endpoints require Basic Authentication. Use the following credentials 
 
 These credentials are defined in the `.env` file as `ADMIN_USERNAME` and `ADMIN_PASSWORD`.
 
+## Database Migrations
+
+The project includes a robust database migration system that allows you to create, run, rollback, and refresh database migrations.
+
+### Using the Migration CLI
+
+The project provides a convenient CLI script for managing migrations:
+
+```bash
+# Make the migrate script executable (if needed)
+chmod +x migrate
+
+# Run all pending migrations
+./migrate run
+
+# Rollback all migrations
+./migrate rollback
+
+# Refresh all migrations (rollback then run)
+./migrate refresh
+```
+
+You can also run these commands inside the Docker container:
+
+```bash
+docker-compose exec app ./migrate run
+```
+
+### Creating New Migrations
+
+To create a new migration:
+
+1. Create a new PHP class in the `src/Database/Schema/Migrations` directory
+2. Implement the `App\Database\Schema\Migration` interface
+3. Define the `up()` and `down()` methods to create and drop your database structures
+4. Implement the `getName()` method to return a unique name for your migration
+
+#### Handling Migration Dependencies
+
+If your migrations have dependencies (e.g., foreign key constraints), you should explicitly register them in the correct order in `MigrateCommand.php`. For example:
+
+```php
+// In MigrateCommand.php
+$migrationRunner = new MigrationRunner();
+
+// Register migrations in the correct order
+$migrationRunner->register(CreateMigrationsTable::class);
+$migrationRunner->register(CreateUsersTable::class);       // Parent table
+$migrationRunner->register(CreateStockQueriesTable::class); // Child table with foreign key
+
+// Then scan for any other migrations
+$migrationRunner->scanMigrations(__DIR__ . '/../../Schema/Migrations');
+```
+
+Example migration class:
+
+```php
+<?php
+
+declare(strict_types=1);
+
+namespace App\Database\Schema\Migrations;
+
+use App\Database\Schema\Migration;
+use Illuminate\Database\Capsule\Manager as Capsule;
+use Illuminate\Database\Schema\Blueprint;
+
+class CreateExampleTable implements Migration
+{
+    public static function getName(): string
+    {
+        return 'create_example_table';
+    }
+
+    public static function up(): void
+    {
+        Capsule::schema()->create('examples', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->timestamps();
+        });
+    }
+
+    public static function down(): void
+    {
+        Capsule::schema()->dropIfExists('examples');
+    }
+}
+```
+
+### How Migrations Work
+
+The migration system:
+
+1. Creates a `migrations` table to track executed migrations
+2. Only runs migrations that haven't been executed yet
+3. Automatically scans the `Migrations` directory for new migration classes
+4. Provides detailed output during the migration process
+
+> **Important Note**: Migrations do not follow a specific order when running automatically. If you have tables with foreign key dependencies, make sure to explicitly register dependent tables in the correct order in `MigrateCommand.php` before running migrations.
+
+### Automatic Migrations
+
+Migrations run automatically when the Docker container starts. This ensures your database schema is always up-to-date when you deploy or restart the application.
+
 ## Running Tests
 
 The project includes PHPUnit tests that can be run within the Docker environment.
@@ -98,6 +203,11 @@ Available test methods:
   - `auth.php` - Authentication middleware setup
 - `public/` - Web server entry point
   - `index.php` - Application entry point
+- `src/Database/Schema/` - Database migration system
+  - `Migration.php` - Migration interface
+  - `MigrationRunner.php` - Migration execution engine
+  - `Migrations/` - Directory containing migration files
+  - `Commands/MigrateCommand.php` - Migration command implementation
   - `swagger-ui.php` - Swagger UI configuration
 - `src/` - Application source code
   - `Controllers/` - API endpoint controllers

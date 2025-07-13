@@ -1,0 +1,27 @@
+#!/usr/bin/env php
+<?php
+
+require __DIR__ . '/vendor/autoload.php';
+
+// Load environment variables
+$dotenv = new \Symfony\Component\Dotenv\Dotenv();
+$dotenv->load(__DIR__ . '/.env');
+
+// Get command argument
+$command = $argv[1] ?? 'run';
+
+switch ($command) {
+    case 'run':
+        \App\Database\Schema\Commands\MigrateCommand::run();
+        break;
+    case 'rollback':
+        \App\Database\Schema\Commands\MigrateCommand::rollback();
+        break;
+    case 'refresh':
+        \App\Database\Schema\Commands\MigrateCommand::refresh();
+        break;
+    default:
+        echo "Unknown command: {$command}\n";
+        echo "Available commands: run, rollback, refresh\n";
+        exit(1);
+}

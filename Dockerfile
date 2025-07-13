@@ -1,6 +1,7 @@
 FROM php:8.2-fpm
 
 # Install system dependencies
+# Add this to your existing apt-get install command
 RUN apt-get update && apt-get install -y \
     git \
     curl \
@@ -8,7 +9,8 @@ RUN apt-get update && apt-get install -y \
     libonig-dev \
     libxml2-dev \
     zip \
-    unzip
+    unzip \
+    default-mysql-client
 
 # Clear cache
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
@@ -28,5 +30,9 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Set working directory
 WORKDIR /var/www/html
 
-# Start PHP-FPM server
-CMD ["bash", "-c", "composer update && php-fpm"]
+# Copy entrypoint script
+COPY docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+# Set entrypoint
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]

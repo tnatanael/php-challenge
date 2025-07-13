@@ -3,11 +3,19 @@
 declare(strict_types=1);
 
 use App\Controllers\HelloController;
+use App\Controllers\UserController;
 use Slim\App;
 
 return function (App $app) {
     // unprotected routes
     $app->get('/hello/{name}', HelloController::class . ':hello');
+    
+    // user routes
+    $app->get('/users', UserController::class . ':getAll');
+    $app->post('/users', UserController::class . ':create');
+    $app->get('/users/{id}', UserController::class . ':getOne');
+    $app->put('/users/{id}', UserController::class . ':update');
+    $app->delete('/users/{id}', UserController::class . ':delete');
 
     // protected routes
     $app->get('/bye/{name}', HelloController::class . ':bye');
@@ -17,7 +25,8 @@ return function (App $app) {
 
         $openapi = (new \OpenApi\Generator())->generate([
             __DIR__ . '/../src/Controllers',
-            __DIR__ . '/../src/OpenApi'
+            __DIR__ . '/../src/OpenApi',
+            __DIR__ . '/../src/Models'
         ]);
         
         // Add JSON_PRETTY_PRINT and ensure proper encoding

@@ -1,0 +1,98 @@
+[13-Jul-2025 11:58:42 UTC] PHP Fatal error:  Uncaught Error: Class "App\Config\Database" not found in /var/www/html/src/Database/Schema/Commands/MigrateCommand.php:19
+Stack trace:
+#0 /var/www/html/migrate(15): App\Database\Schema\Commands\MigrateCommand::run()
+#1 {main}
+  thrown in /var/www/html/src/Database/Schema/Commands/MigrateCommand.php on line 19
+[13-Jul-2025 12:01:51 UTC] PHP Fatal error:  Uncaught Error: Class "App\Config\Database" not found in /var/www/html/src/Database/Schema/Commands/MigrateCommand.php:19
+Stack trace:
+#0 /var/www/html/migrate(15): App\Database\Schema\Commands\MigrateCommand::run()
+#1 {main}
+  thrown in /var/www/html/src/Database/Schema/Commands/MigrateCommand.php on line 19
+[13-Jul-2025 12:03:14 UTC] PHP Fatal error:  Uncaught Error: Class "App\Config\Database" not found in /var/www/html/src/Database/Schema/Commands/MigrateCommand.php:19
+Stack trace:
+#0 /var/www/html/migrate(15): App\Database\Schema\Commands\MigrateCommand::run()
+#1 {main}
+  thrown in /var/www/html/src/Database/Schema/Commands/MigrateCommand.php on line 19
+[13-Jul-2025 12:06:21 UTC] PHP Fatal error:  Uncaught TypeError: pathinfo(): Argument #1 ($path) must be of type string, SplFileInfo given in /var/www/html/src/Database/Schema/MigrationRunner.php:95
+Stack trace:
+#0 /var/www/html/src/Database/Schema/MigrationRunner.php(95): pathinfo(Object(SplFileInfo), 8)
+#1 /var/www/html/src/Database/Schema/Commands/MigrateCommand.php(28): App\Database\Schema\MigrationRunner->scanMigrations('/var/www/html/s...')
+#2 /var/www/html/migrate(15): App\Database\Schema\Commands\MigrateCommand::run()
+#3 {main}
+  thrown in /var/www/html/src/Database/Schema/MigrationRunner.php on line 95
+[13-Jul-2025 12:08:31 UTC] PHP Fatal error:  Uncaught TypeError: pathinfo(): Argument #1 ($path) must be of type string, SplFileInfo given in /var/www/html/src/Database/Schema/MigrationRunner.php:95
+Stack trace:
+#0 /var/www/html/src/Database/Schema/MigrationRunner.php(95): pathinfo(Object(SplFileInfo), 8)
+#1 /var/www/html/src/Database/Schema/Commands/MigrateCommand.php(28): App\Database\Schema\MigrationRunner->scanMigrations('/var/www/html/s...')
+#2 /var/www/html/migrate(15): App\Database\Schema\Commands\MigrateCommand::run()
+#3 {main}
+  thrown in /var/www/html/src/Database/Schema/MigrationRunner.php on line 95
+[13-Jul-2025 12:10:51 UTC] PHP Fatal error:  Uncaught PDOException: SQLSTATE[HY000]: General error: 1824 Failed to open the referenced table 'users' in /var/www/html/vendor/illuminate/database/Connection.php:568
+Stack trace:
+#0 /var/www/html/vendor/illuminate/database/Connection.php(568): PDOStatement->execute()
+#1 /var/www/html/vendor/illuminate/database/Connection.php(809): Illuminate\Database\Connection->Illuminate\Database\{closure}('alter table `st...', Array)
+#2 /var/www/html/vendor/illuminate/database/Connection.php(776): Illuminate\Database\Connection->runQueryCallback('alter table `st...', Array, Object(Closure))
+#3 /var/www/html/vendor/illuminate/database/Connection.php(557): Illuminate\Database\Connection->run('alter table `st...', Array, Object(Closure))
+#4 /var/www/html/vendor/illuminate/database/Schema/Blueprint.php(119): Illuminate\Database\Connection->statement('alter table `st...')
+#5 /var/www/html/vendor/illuminate/database/Schema/Builder.php(618): Illuminate\Database\Schema\Blueprint->build()
+#6 /var/www/html/vendor/illuminate/database/Schema/Builder.php(472): Illuminate\Database\Schema\Builder->build(Object(Illuminate\Database\Schema\Blueprint))
+#7 /var/www/html/src/Database/Schema/Migrations/CreateStockQueriesTable.php(21): Illuminate\Database\Schema\Builder->create('stock_queries', Object(Closure))
+#8 /var/www/html/src/Database/Schema/MigrationRunner.php(127): App\Database\Schema\Migrations\CreateStockQueriesTable::up()
+#9 /var/www/html/src/Database/Schema/Commands/MigrateCommand.php(31): App\Database\Schema\MigrationRunner->up()
+#10 /var/www/html/migrate(15): App\Database\Schema\Commands\MigrateCommand::run()
+#11 {main}
+
+Next Illuminate\Database\QueryException: SQLSTATE[HY000]: General error: 1824 Failed to open the referenced table 'users' (Connection: default, SQL: alter table `stock_queries` add constraint `stock_queries_user_id_foreign` foreign key (`user_id`) references `users` (`id`) on delete cascade) in /var/www/html/vendor/illuminate/database/Connection.php:822
+Stack trace:
+#0 /var/www/html/vendor/illuminate/database/Connection.php(776): Illuminate\Database\Connection->runQueryCallback('alter table `st...', Array, Object(Closure))
+#1 /var/www/html/vendor/illuminate/database/Connection.php(557): Illuminate\Database\Connection->run('alter table `st...', Array, Object(Closure))
+#2 /var/www/html/vendor/illuminate/database/Schema/Blueprint.php(119): Illuminate\Database\Connection->statement('alter table `st...')
+#3 /var/www/html/vendor/illuminate/database/Schema/Builder.php(618): Illuminate\Database\Schema\Blueprint->build()
+#4 /var/www/html/vendor/illuminate/database/Schema/Builder.php(472): Illuminate\Database\Schema\Builder->build(Object(Illuminate\Database\Schema\Blueprint))
+#5 /var/www/html/src/Database/Schema/Migrations/CreateStockQueriesTable.php(21): Illuminate\Database\Schema\Builder->create('stock_queries', Object(Closure))
+#6 /var/www/html/src/Database/Schema/MigrationRunner.php(127): App\Database\Schema\Migrations\CreateStockQueriesTable::up()
+#7 /var/www/html/src/Database/Schema/Commands/MigrateCommand.php(31): App\Database\Schema\MigrationRunner->up()
+#8 /var/www/html/migrate(15): App\Database\Schema\Commands\MigrateCommand::run()
+#9 {main}
+  thrown in /var/www/html/vendor/illuminate/database/Connection.php on line 822
+[13-Jul-2025 12:20:55 UTC] PHP Fatal error:  Uncaught PDOException: SQLSTATE[HY000] [2002] Connection refused in /var/www/html/vendor/illuminate/database/Connectors/Connector.php:66
+Stack trace:
+#0 /var/www/html/vendor/illuminate/database/Connectors/Connector.php(66): PDO->__construct('mysql:host=mysq...', 'stock_user', Object(SensitiveParameterValue), Array)
+#1 /var/www/html/vendor/illuminate/database/Connectors/Connector.php(85): Illuminate\Database\Connectors\Connector->createPdoConnection('mysql:host=mysq...', 'stock_user', Object(SensitiveParameterValue), Array)
+#2 /var/www/html/vendor/illuminate/database/Connectors/Connector.php(48): Illuminate\Database\Connectors\Connector->tryAgainIfCausedByLostConnection(Object(PDOException), 'mysql:host=mysq...', 'stock_user', Object(SensitiveParameterValue), Array)
+#3 /var/www/html/vendor/illuminate/database/Connectors/MySqlConnector.php(24): Illuminate\Database\Connectors\Connector->createConnection('mysql:host=mysq...', Array, Array)
+#4 /var/www/html/vendor/illuminate/database/Connectors/ConnectionFactory.php(184): Illuminate\Database\Connectors\MySqlConnector->connect(Array)
+#5 [internal function]: Illuminate\Database\Connectors\ConnectionFactory->Illuminate\Database\Connectors\{closure}()
+#6 /var/www/html/vendor/illuminate/database/Connection.php(1228): call_user_func(Object(Closure))
+#7 /var/www/html/vendor/illuminate/database/Connection.php(1264): Illuminate\Database\Connection->getPdo()
+#8 /var/www/html/vendor/illuminate/database/Connection.php(509): Illuminate\Database\Connection->getReadPdo()
+#9 /var/www/html/vendor/illuminate/database/Connection.php(404): Illuminate\Database\Connection->getPdoForSelect(true)
+#10 /var/www/html/vendor/illuminate/database/Connection.php(809): Illuminate\Database\Connection->Illuminate\Database\{closure}('select exists (...', Array)
+#11 /var/www/html/vendor/illuminate/database/Connection.php(976): Illuminate\Database\Connection->runQueryCallback('select exists (...', Array, Object(Closure))
+#12 /var/www/html/vendor/illuminate/database/Connection.php(955): Illuminate\Database\Connection->tryAgainIfCausedByLostConnection(Object(Illuminate\Database\QueryException), 'select exists (...', Array, Object(Closure))
+#13 /var/www/html/vendor/illuminate/database/Connection.php(778): Illuminate\Database\Connection->handleQueryException(Object(Illuminate\Database\QueryException), 'select exists (...', Array, Object(Closure))
+#14 /var/www/html/vendor/illuminate/database/Connection.php(395): Illuminate\Database\Connection->run('select exists (...', Array, Object(Closure))
+#15 /var/www/html/vendor/illuminate/database/Connection.php(341): Illuminate\Database\Connection->select('select exists (...', Array, true)
+#16 /var/www/html/vendor/illuminate/database/Connection.php(358): Illuminate\Database\Connection->selectOne('select exists (...', Array, true)
+#17 /var/www/html/vendor/illuminate/database/Schema/Builder.php(174): Illuminate\Database\Connection->scalar('select exists (...')
+#18 /var/www/html/src/Database/Schema/MigrationRunner.php(37): Illuminate\Database\Schema\Builder->hasTable('migrations')
+#19 /var/www/html/src/Database/Schema/MigrationRunner.php(115): App\Database\Schema\MigrationRunner->createMigrationsTable()
+#20 /var/www/html/src/Database/Schema/Commands/MigrateCommand.php(28): App\Database\Schema\MigrationRunner->up()
+#21 /var/www/html/migrate(15): App\Database\Schema\Commands\MigrateCommand::run()
+#22 {main}
+
+Next Illuminate\Database\QueryException: SQLSTATE[HY000] [2002] Connection refused (Connection: default, SQL: select exists (select 1 from information_schema.tables where table_schema = schema() and table_name = 'migrations' and table_type in ('BASE TABLE', 'SYSTEM VERSIONED')) as `exists`) in /var/www/html/vendor/illuminate/database/Connection.php:822
+Stack trace:
+#0 /var/www/html/vendor/illuminate/database/Connection.php(976): Illuminate\Database\Connection->runQueryCallback('select exists (...', Array, Object(Closure))
+#1 /var/www/html/vendor/illuminate/database/Connection.php(955): Illuminate\Database\Connection->tryAgainIfCausedByLostConnection(Object(Illuminate\Database\QueryException), 'select exists (...', Array, Object(Closure))
+#2 /var/www/html/vendor/illuminate/database/Connection.php(778): Illuminate\Database\Connection->handleQueryException(Object(Illuminate\Database\QueryException), 'select exists (...', Array, Object(Closure))
+#3 /var/www/html/vendor/illuminate/database/Connection.php(395): Illuminate\Database\Connection->run('select exists (...', Array, Object(Closure))
+#4 /var/www/html/vendor/illuminate/database/Connection.php(341): Illuminate\Database\Connection->select('select exists (...', Array, true)
+#5 /var/www/html/vendor/illuminate/database/Connection.php(358): Illuminate\Database\Connection->selectOne('select exists (...', Array, true)
+#6 /var/www/html/vendor/illuminate/database/Schema/Builder.php(174): Illuminate\Database\Connection->scalar('select exists (...')
+#7 /var/www/html/src/Database/Schema/MigrationRunner.php(37): Illuminate\Database\Schema\Builder->hasTable('migrations')
+#8 /var/www/html/src/Database/Schema/MigrationRunner.php(115): App\Database\Schema\MigrationRunner->createMigrationsTable()
+#9 /var/www/html/src/Database/Schema/Commands/MigrateCommand.php(28): App\Database\Schema\MigrationRunner->up()
+#10 /var/www/html/migrate(15): App\Database\Schema\Commands\MigrateCommand::run()
+#11 {main}
+  thrown in /var/www/html/vendor/illuminate/database/Connection.php on line 822

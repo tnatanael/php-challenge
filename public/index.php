@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Config\Database;
 use DI\ContainerBuilder;
 use Slim\Factory\AppFactory;
 use Symfony\Component\Dotenv\Dotenv;
@@ -12,6 +13,9 @@ $dotenv = new Dotenv();
 $dotenv->load(__DIR__ . '/../.env');
 
 $ENV = $_ENV['ENV'] ?? 'dev';
+
+// Initialize database connection
+Database::boot();
 
 $containerBuilder = new ContainerBuilder();
 
@@ -24,6 +28,9 @@ $container = $containerBuilder->build();
 AppFactory::setContainer($container);
 
 $app = AppFactory::create();
+
+// Add body parsing middleware
+$app->addBodyParsingMiddleware();
 
 // Register routes
 $routes = require __DIR__ . '/../app/routes.php';
