@@ -590,7 +590,7 @@ The application follows a modular architecture that makes it easy to extend:
 
 ### Troubleshooting
 
-- PHP error logs are available in the `php-errors.log` file in the project root
-- RabbitMQ consumer logs are available in the `consumer.log` file
+- PHP error logs are available in the `logs/php-errors.log` file
+- RabbitMQ consumer logs are available in the `logs/consumer.log` file
 - Database connection issues can be resolved by checking the `.env` configuration
 - RabbitMQ connection issues can be verified through the management interface at port 15672

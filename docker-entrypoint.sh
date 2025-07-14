@@ -10,6 +10,10 @@ if [ -f .env ]; then
   export $(grep -v '^#' .env | xargs)
 fi
 
+# Create logs directory if it doesn't exist
+mkdir -p ./logs
+chmod 777 ./logs
+
 # Run composer update
 composer update
 
@@ -54,9 +58,9 @@ done
 
 # Start the email consumer in the background
 echo "Starting email consumer in background..."
-touch ./consumer.log  # Ensure the log file exists
-chmod 666 ./consumer.log  # Make it writable
-nohup php ./email-consumer.php > ./consumer.log 2>&1 &
+touch ./logs/consumer.log  # Ensure the log file exists
+chmod 666 ./logs/consumer.log  # Make it writable
+nohup php ./email-consumer.php > ./logs/consumer.log 2>&1 &
 CONSUMER_PID=$!
 echo "Email consumer started with PID $CONSUMER_PID"
 
@@ -65,8 +69,8 @@ sleep 2
 if ps -p $CONSUMER_PID > /dev/null; then
     echo "Email consumer is running successfully."
 else
-    echo "Warning: Email consumer may have failed to start. Check consumer.log for details."
-    cat ./consumer.log
+    echo "Warning: Email consumer may have failed to start. Check logs/consumer.log for details."
+    cat ./logs/consumer.log
 fi
 
 # Start PHP-FPM
