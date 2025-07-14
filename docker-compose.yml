@@ -9,8 +9,8 @@ services:
     container_name: php_app
     volumes:
       - .:/var/www/html
-      - ./php-errors.log:/var/log/php-errors.log
-      - ./consumer.log:/var/www/html/consumer.log
+      - php_errors_log:/var/log/php-errors.log
+      - consumer_log:/var/www/html/consumer.log
     depends_on:
       mysql:
         condition: service_started
@@ -92,3 +92,5 @@ networks:
 volumes:
   mysql_data:
   rabbitmq_data:
+  php_errors_log:
+  consumer_log:
