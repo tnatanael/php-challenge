@@ -10,7 +10,8 @@ RUN apt-get update && apt-get install -y \
     zip \
     unzip \
     default-mysql-client \
-    libsqlite3-dev
+    libsqlite3-dev \
+    procps
 
 # Clear cache
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*

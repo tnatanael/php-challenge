@@ -413,4 +413,65 @@ class UserTest extends BaseTestCase
         // Act
         $this->app->handle($request);
     }
+
+    /**
+     * Test user login with missing fields
+     */
+    public function testLoginWithMissingFields(): void
+    {
+        // Arrange
+        $headers = [
+            'HTTP_ACCEPT' => 'application/json',
+            'Content-Type' => 'application/json'
+        ];
+        
+        // Test with missing email
+        $loginDataMissingEmail = json_encode([
+            'password' => 'somepassword'
+        ]);
+        
+        $request = $this->createRequest('POST', '/auth/login', $headers);
+        $request->getBody()->write($loginDataMissingEmail);
+
+        // Act
+        $response = $this->app->handle($request);
+        $payload = json_decode((string)$response->getBody(), true);
+
+        // Assert
+        $this->assertEquals(400, $response->getStatusCode());
+        $this->assertFalse($payload['success']);
+        $this->assertEquals('Email and password are required', $payload['message']);
+        
+        // Test with missing password
+        $loginDataMissingPassword = json_encode([
+            'email' => 'test@example.com'
+        ]);
+        
+        $request = $this->createRequest('POST', '/auth/login', $headers);
+        $request->getBody()->write($loginDataMissingPassword);
+
+        // Act
+        $response = $this->app->handle($request);
+        $payload = json_decode((string)$response->getBody(), true);
+
+        // Assert
+        $this->assertEquals(400, $response->getStatusCode());
+        $this->assertFalse($payload['success']);
+        $this->assertEquals('Email and password are required', $payload['message']);
+        
+        // Test with empty request body
+        $loginDataEmpty = json_encode([]);
+        
+        $request = $this->createRequest('POST', '/auth/login', $headers);
+        $request->getBody()->write($loginDataEmpty);
+
+        // Act
+        $response = $this->app->handle($request);
+        $payload = json_decode((string)$response->getBody(), true);
+
+        // Assert
+        $this->assertEquals(400, $response->getStatusCode());
+        $this->assertFalse($payload['success']);
+        $this->assertEquals('Email and password are required', $payload['message']);
+    }
 }

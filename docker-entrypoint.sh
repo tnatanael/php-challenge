@@ -31,10 +31,21 @@ php ./migrate run
 
 # Wait for RabbitMQ to be ready if enabled
 if [ "$RMQ_ENABLED" = "1" ]; then
-    echo "Waiting for RabbitMQ to be ready..."
-    
     # Skip the port check since Docker Compose already waited for RabbitMQ to be healthy
     echo "RabbitMQ should be ready (Docker Compose healthcheck passed)"
+    
+    # Additional connection verification
+    MAX_RETRIES=15
+    RETRY_COUNT=0
+    while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+        if (echo > /dev/tcp/rabbitmq/5672) &>/dev/null; then
+            echo "RabbitMQ connection verified"
+            break
+        fi
+        echo "RabbitMQ not ready - retrying... (Attempt $((RETRY_COUNT+1))/$MAX_RETRIES))"
+        RETRY_COUNT=$((RETRY_COUNT+1))
+        sleep 2
+    done
     
     # Start the email consumer in the background
     echo "Starting email consumer in background..."

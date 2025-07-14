@@ -16,6 +16,9 @@
         <include>
             <directory suffix=".php">src</directory>
         </include>
+        <exclude>
+            <file>src/Config/Database.php</file>
+        </exclude>
         <report>
             <html outputDirectory="coverage/html"/>
             <clover outputFile="coverage/clover.xml"/>

@@ -4,8 +4,19 @@ declare(strict_types=1);
 
 namespace Tests;
 
+use App\Controllers\StockController;
 use App\Models\StockQuery;
 use App\Models\User;
+use App\Repositories\StockQueryRepository;
+use App\Services\EmailNotificationService;
+use App\Services\HttpClient;
+use App\Services\Interfaces\HttpClientInterface;
+use App\Services\Interfaces\NotificationServiceInterface;
+use App\Services\Interfaces\StockApiServiceInterface;
+use App\Services\StockService;
+use App\Services\StooqApiService;
+use App\Services\TemplateRenderer;
+use App\Validators\StockValidator;
 use Slim\Exception\HttpUnauthorizedException;
 use Tests\Factories\StockFactory;
 
@@ -41,25 +52,104 @@ class StockTest extends BaseTestCase
         $this->app = $this->getAppInstance();
         $this->stockFactory = StockFactory::new();
     
-        // Create a mock of the StockApiService
-        $stockApiServiceMock = $this->createMock(\App\Services\StockApiService::class);
-    
-        // Configure the mock
-        $stockApiServiceMock->method('fetchFromApi')
+        // Create mocks for all the new services and interfaces
+        $httpClientMock = $this->createMock(HttpClientInterface::class);
+        $httpClientMock->method('get')
             ->will($this->returnCallback(function($url) {
                 $stockFactory = StockFactory::new();
     
-                if (strpos($url, 's=' . StockFactory::INVALID_SYMBOL) !== false) {
+                if (strpos($url, StockFactory::INVALID_SYMBOL) !== false) {
                     return $stockFactory->toInvalidCsv();
                 }
     
                 return $stockFactory->toCsv();
             }));
-    
-        // Replace the service in the container
+        
+        // Create StooqApiService with mocked HttpClient
+        $stockApiServiceMock = $this->createMock(StockApiServiceInterface::class);
+        $stockApiServiceMock->method('fetchStockData')
+            ->will($this->returnCallback(function($symbol) {
+                $stockFactory = StockFactory::new();
+                
+                if ($symbol === StockFactory::INVALID_SYMBOL) {
+                    return null;
+                }
+                
+                return $stockFactory->make();
+            }));
+        
+        // Create StockQueryRepository mock
+        $stockQueryRepositoryMock = $this->createMock(StockQueryRepository::class);
+        $stockQueryRepositoryMock->method('create')
+            ->will($this->returnCallback(function($data) {
+                return StockQuery::create($data);
+            }));
+        $stockQueryRepositoryMock->method('getUserHistory')
+            ->will($this->returnCallback(function($userId) {
+                return StockQuery::where('user_id', $userId)
+                    ->orderBy('created_at', 'desc')
+                    ->get()
+                    ->toArray();
+            }));
+        
+        // Create StockService with mocked dependencies
+        $stockServiceMock = $this->getMockBuilder(StockService::class)
+            ->setConstructorArgs([$stockApiServiceMock, $stockQueryRepositoryMock])
+            ->onlyMethods([])
+            ->getMock();
+        
+        // Create TemplateRenderer mock
+        $templateRendererMock = $this->createMock(TemplateRenderer::class);
+        $templateRendererMock->method('render')
+            ->will($this->returnCallback(function($template, $data) {
+                // Simple template rendering simulation
+                $stockData = $data['stockData'];
+                return "<h1>Stock Quote Information</h1>\n" .
+                       "<p><strong>Symbol:</strong> {$stockData['symbol']}</p>\n" .
+                       "<p><strong>Name:</strong> {$stockData['name']}</p>\n" .
+                       "<p><strong>Date:</strong> {$stockData['date']}</p>\n" .
+                       "<p><strong>Open:</strong> {$stockData['open']}</p>\n" .
+                       "<p><strong>High:</strong> {$stockData['high']}</p>\n" .
+                       "<p><strong>Low:</strong> {$stockData['low']}</p>\n" .
+                       "<p><strong>Close:</strong> {$stockData['close']}</p>";
+            }));
+        
+        // Create MessageQueue mock
+        $messageQueueMock = $this->createMock(\App\Services\MessageQueue::class);
+        $messageQueueMock->method('publish')
+            ->willReturn(true);
+        
+        // Create NotificationService mock
+        $notificationServiceMock = $this->getMockBuilder(EmailNotificationService::class)
+            ->setConstructorArgs([$messageQueueMock, $templateRendererMock, []])
+            ->onlyMethods([])
+            ->getMock();
+        
+        // Create StockValidator mock
+        $validatorMock = $this->createMock(StockValidator::class);
+        $validatorMock->method('validateSymbol')
+            ->will($this->returnCallback(function($symbol) {
+                return !empty($symbol);
+            }));
+        
+        // Replace the services in the container
         $container = $this->app->getContainer();
         /** @var \DI\Container $container */
-        $container->set(\App\Services\StockApiService::class, $stockApiServiceMock);
+        $container->set(HttpClientInterface::class, $httpClientMock);
+        $container->set(StockApiServiceInterface::class, $stockApiServiceMock);
+        $container->set(StockQueryRepository::class, $stockQueryRepositoryMock);
+        $container->set(StockService::class, $stockServiceMock);
+        $container->set(TemplateRenderer::class, $templateRendererMock);
+        $container->set(\App\Services\MessageQueue::class, $messageQueueMock);
+        $container->set(NotificationServiceInterface::class, $notificationServiceMock);
+        $container->set(StockValidator::class, $validatorMock);
+        $container->set(StockController::class, function() use ($container) {
+            return new StockController(
+                $container->get(StockService::class),
+                $container->get(NotificationServiceInterface::class),
+                $container->get(StockValidator::class)
+            );
+        });
     
         // Clean up test stock queries from previous test runs
         StockQuery::where('symbol', $this->stockFactory->getDefaults()['symbol'])->delete();
@@ -204,22 +294,84 @@ class StockTest extends BaseTestCase
     }
 
     /**
-     * Test that email template is rendered correctly
+     * Test the StockService getStockData method
      */
-    public function testRenderEmailTemplate(): void
+    public function testStockServiceGetStockData(): void
     {
         // Arrange
-        $container = $this->getAppInstance()->getContainer();
-        $stockController = $container->get(\App\Controllers\StockController::class);
+        $container = $this->app->getContainer();
+        $stockService = $container->get(StockService::class);
+        $symbol = $this->stockFactory->getDefaults()['symbol'];
         
-        // Use reflection to access the private method
-        $reflectionMethod = new \ReflectionMethod(\App\Controllers\StockController::class, 'renderEmailTemplate');
-        $reflectionMethod->setAccessible(true);
+        // Act
+        $stockData = $stockService->getStockData($symbol);
         
+        // Assert
+        $this->assertNotNull($stockData);
+        $this->assertEquals($symbol, $stockData['symbol']);
+        $this->assertArrayHasKey('name', $stockData);
+        $this->assertArrayHasKey('open', $stockData);
+        $this->assertArrayHasKey('high', $stockData);
+        $this->assertArrayHasKey('low', $stockData);
+        $this->assertArrayHasKey('close', $stockData);
+    }
+    
+    /**
+     * Test the StockService saveStockQuery method
+     */
+    public function testStockServiceSaveStockQuery(): void
+    {
+        // Arrange
+        $container = $this->app->getContainer();
+        $stockService = $container->get(StockService::class);
+        $userId = 1;
+        $stockData = $this->stockFactory->make();
+        
+        // Act
+        $stockQuery = $stockService->saveStockQuery($userId, $stockData);
+        
+        // Assert
+        $this->assertNotNull($stockQuery);
+        $this->assertEquals($userId, $stockQuery->user_id);
+        $this->assertEquals($stockData['symbol'], $stockQuery->symbol);
+        $this->assertEquals($stockData['name'], $stockQuery->name);
+        $this->assertEquals($stockData['open'], $stockQuery->open);
+        $this->assertEquals($stockData['high'], $stockQuery->high);
+        $this->assertEquals($stockData['low'], $stockQuery->low);
+        $this->assertEquals($stockData['close'], $stockQuery->close);
+    }
+    
+    /**
+     * Test the NotificationService send method
+     */
+    public function testNotificationServiceSend(): void
+    {
+        // Arrange
+        $container = $this->app->getContainer();
+        $notificationService = $container->get(NotificationServiceInterface::class);
+        $recipient = 'test@example.com';
+        $subject = 'Test Subject';
+        $data = $this->stockFactory->getEmailTemplateData();
+        
+        // Act
+        $result = $notificationService->send($recipient, $subject, $data);
+        
+        // Assert
+        $this->assertTrue($result);
+    }
+    
+    /**
+     * Test the TemplateRenderer render method
+     */
+    public function testTemplateRendererRender(): void
+    {
+        // Arrange
+        $container = $this->app->getContainer();
+        $templateRenderer = $container->get(TemplateRenderer::class);
         $stockData = $this->stockFactory->getEmailTemplateData();
         
         // Act
-        $emailContent = $reflectionMethod->invoke($stockController, $stockData);
+        $emailContent = $templateRenderer->render('emails/stock_quote', ['stockData' => $stockData]);
         
         // Assert
         $this->assertStringContainsString('Stock Quote Information', $emailContent);

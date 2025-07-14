@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tests;
 
-use App\Config\Database;
+use Tests\Config\TestDatabase;
 use DI\ContainerBuilder;
 use Exception;
 use Firebase\JWT\JWT;
@@ -34,7 +34,7 @@ class BaseTestCase extends PHPUnit_TestCase
         $dotenv->load(__DIR__ . '/../.env');
 
         // Initialize in-memory test database
-        Database::bootTestDatabase();
+        TestDatabase::boot();
 
         $dependencies = require __DIR__ . '/../app/services.php';
         $dependencies($containerBuilder);

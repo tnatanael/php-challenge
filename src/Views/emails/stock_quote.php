@@ -36,13 +36,13 @@
     <h1>Stock Quote Information</h1>
     <p>Here is the stock quote you requested:</p>
     <ul>
-        <li><strong>Symbol:</strong> <?= $stockData['symbol'] ?></li>
-        <li><strong>Name:</strong> <?= $stockData['name'] ?></li>
-        <li><strong>Date:</strong> <?= $stockData['date'] ?></li>
-        <li><strong>Open:</strong> <?= $stockData['open'] ?></li>
-        <li><strong>High:</strong> <?= $stockData['high'] ?></li>
-        <li><strong>Low:</strong> <?= $stockData['low'] ?></li>
-        <li><strong>Close:</strong> <?= $stockData['close'] ?></li>
+        <li><strong>Symbol:</strong> <?= $stockData['symbol'] ?? '' ?></li>
+        <li><strong>Name:</strong> <?= $stockData['name'] ?? '' ?></li>
+        <li><strong>Date:</strong> <?= $stockData['date'] ?? '' ?></li>
+        <li><strong>Open:</strong> <?= $stockData['open'] ?? '' ?></li>
+        <li><strong>High:</strong> <?= $stockData['high'] ?? '' ?></li>
+        <li><strong>Low:</strong> <?= $stockData['low'] ?? '' ?></li>
+        <li><strong>Close:</strong> <?= $stockData['close'] ?? '' ?></li>
     </ul>
     <div class="footer">
         <p>This is an automated message from the Stock API service.</p>
