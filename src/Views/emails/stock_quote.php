@@ -38,6 +38,7 @@
     <ul>
         <li><strong>Symbol:</strong> <?= $stockData['symbol'] ?></li>
         <li><strong>Name:</strong> <?= $stockData['name'] ?></li>
+        <li><strong>Date:</strong> <?= $stockData['date'] ?></li>
         <li><strong>Open:</strong> <?= $stockData['open'] ?></li>
         <li><strong>High:</strong> <?= $stockData['high'] ?></li>
         <li><strong>Low:</strong> <?= $stockData['low'] ?></li>

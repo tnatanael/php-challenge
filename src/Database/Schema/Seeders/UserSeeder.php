@@ -31,8 +31,8 @@ class UserSeeder implements Seeder
             
             // Create default admin user
             User::create([
-                'email' => $_ENV['ADMIN_USERNAME'] ?? 'user@example.com',
-                'password' => password_hash($_ENV['ADMIN_PASSWORD'] ?? 'user123', PASSWORD_DEFAULT)
+                'email' => $_ENV['DEFAULT_USERNAME'] ?? 'user@example.com',
+                'password' => password_hash($_ENV['DEFAULT_PASSWORD'] ?? 'user123', PASSWORD_DEFAULT)
             ]);
             
             echo "Default admin user created successfully.\n";

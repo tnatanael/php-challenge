@@ -7,6 +7,7 @@ namespace Tests;
 use App\Models\StockQuery;
 use App\Models\User;
 use Slim\Exception\HttpUnauthorizedException;
+use Tests\Factories\StockFactory;
 
 /**
  * Class StockTest
@@ -23,6 +24,11 @@ class StockTest extends BaseTestCase
      * @var bool
      */
     private static $functionsMocked = false;
+    
+    /**
+     * @var StockFactory
+     */
+    protected $stockFactory;
 
     /**
      * @throws \Exception
@@ -30,35 +36,34 @@ class StockTest extends BaseTestCase
     public function setUp(): void
     {
         parent::setUp();
-
-        $this->app = $this->getAppInstance();
-        
-        // Clean up test stock queries from previous test runs
-        StockQuery::where('symbol', 'AAPL.US')->delete();
-        StockQuery::where('symbol', 'MSFT.US')->delete();
-        
-        // Set up function mocking
-        $this->setUpFunctionMocks();
-    }
-
-    /**
-     * Set up function mocks for the entire test class
-     */
-    private function setUpFunctionMocks(): void
-    {
-        if (self::$functionsMocked) return;
     
-        // Mock for App\Controllers namespace
-        eval('namespace App\\Controllers;');
-        function file_get_contents($url) {
-            if (strpos($url, 's=INVALID') !== false) {
-                return "Symbol,Name,Open,High,Low,Close\nN/D,N/D,N/D,N/D,N/D,N/D";
-            }
-            return "Symbol,Name,Open,High,Low,Close\nAAPL.US,APPLE INC,150.25,152.43,149.92,151.60";
-        }
-        
-        eval('namespace Tests;');
-        self::$functionsMocked = true;
+        // Initialize the app first
+        $this->app = $this->getAppInstance();
+        $this->stockFactory = StockFactory::new();
+    
+        // Create a mock of the StockApiService
+        $stockApiServiceMock = $this->createMock(\App\Services\StockApiService::class);
+    
+        // Configure the mock
+        $stockApiServiceMock->method('fetchFromApi')
+            ->will($this->returnCallback(function($url) {
+                $stockFactory = StockFactory::new();
+    
+                if (strpos($url, 's=' . StockFactory::INVALID_SYMBOL) !== false) {
+                    return $stockFactory->toInvalidCsv();
+                }
+    
+                return $stockFactory->toCsv();
+            }));
+    
+        // Replace the service in the container
+        $container = $this->app->getContainer();
+        /** @var \DI\Container $container */
+        $container->set(\App\Services\StockApiService::class, $stockApiServiceMock);
+    
+        // Clean up test stock queries from previous test runs
+        StockQuery::where('symbol', $this->stockFactory->getDefaults()['symbol'])->delete();
+        StockQuery::where('symbol', $this->stockFactory->getMicrosoftDefaults()['symbol'])->delete();
     }
 
     /**
@@ -67,7 +72,7 @@ class StockTest extends BaseTestCase
     public function testGetStockThrowsUnauthorized(): void
     {
         // Arrange
-        $request = $this->createRequest('GET', '/stock?q=AAPL.US');
+        $request = $this->createRequest('GET', '/stock?q=' . $this->stockFactory->getDefaults()['symbol']);
 
         // Assert
         $this->expectException(HttpUnauthorizedException::class);
@@ -99,7 +104,7 @@ class StockTest extends BaseTestCase
         // Arrange
         $token = $this->getJwtToken();
         $headers = ['HTTP_ACCEPT' => 'application/json', 'Authorization' => 'Bearer ' . $token];
-        $request = $this->createRequest('GET', '/stock?q=AAPL.US', $headers);
+        $request = $this->createRequest('GET', '/stock?q=' . $this->stockFactory->getDefaults()['symbol'], $headers);
 
         // Act
         $response = $this->app->handle($request);
@@ -112,18 +117,19 @@ class StockTest extends BaseTestCase
         
         // Verify the stock data in the response
         $stockData = $payload['data'];
-        $this->assertEquals('AAPL.US', $stockData['symbol']);
-        $this->assertEquals('APPLE INC', $stockData['name']);
+        $defaultStock = $this->stockFactory->getDefaults();
+        $this->assertEquals($defaultStock['symbol'], $stockData['symbol']);
+        $this->assertEquals($defaultStock['name'], $stockData['name']);
         $this->assertIsFloat($stockData['open']);
         $this->assertIsFloat($stockData['high']);
         $this->assertIsFloat($stockData['low']);
         $this->assertIsFloat($stockData['close']);
         
         // Verify that the stock query was saved to the database
-        $stockQuery = StockQuery::where('symbol', 'AAPL.US')->first();
+        $stockQuery = StockQuery::where('symbol', $defaultStock['symbol'])->first();
         $this->assertNotNull($stockQuery);
-        $this->assertEquals('AAPL.US', $stockQuery->symbol);
-        $this->assertEquals('APPLE INC', $stockQuery->name);
+        $this->assertEquals($defaultStock['symbol'], $stockQuery->symbol);
+        $this->assertEquals($defaultStock['name'], $stockQuery->name);
     }
 
     /**
@@ -154,7 +160,7 @@ class StockTest extends BaseTestCase
         // Arrange
         $token = $this->getJwtToken();
         $headers = ['HTTP_ACCEPT' => 'application/json', 'Authorization' => 'Bearer ' . $token];
-        $request = $this->createRequest('GET', '/stock?q=INVALID', $headers);
+        $request = $this->createRequest('GET', '/stock?q=' . StockFactory::INVALID_SYMBOL, $headers);
 
         // Act
         $response = $this->app->handle($request);
@@ -192,7 +198,36 @@ class StockTest extends BaseTestCase
         
         // Verify the first stock query in the history
         $firstQuery = $payload['data'][0];
-        $this->assertEquals('AAPL.US', $firstQuery['symbol']);
-        $this->assertEquals('APPLE INC', $firstQuery['name']);
+        $defaultStock = $this->stockFactory->getDefaults();
+        $this->assertEquals($defaultStock['symbol'], $firstQuery['symbol']);
+        $this->assertEquals($defaultStock['name'], $firstQuery['name']);
+    }
+
+    /**
+     * Test that email template is rendered correctly
+     */
+    public function testRenderEmailTemplate(): void
+    {
+        // Arrange
+        $container = $this->getAppInstance()->getContainer();
+        $stockController = $container->get(\App\Controllers\StockController::class);
+        
+        // Use reflection to access the private method
+        $reflectionMethod = new \ReflectionMethod(\App\Controllers\StockController::class, 'renderEmailTemplate');
+        $reflectionMethod->setAccessible(true);
+        
+        $stockData = $this->stockFactory->getEmailTemplateData();
+        
+        // Act
+        $emailContent = $reflectionMethod->invoke($stockController, $stockData);
+        
+        // Assert
+        $this->assertStringContainsString('Stock Quote Information', $emailContent);
+        $this->assertStringContainsString('<strong>Symbol:</strong> ' . $stockData['symbol'], $emailContent);
+        $this->assertStringContainsString('<strong>Date:</strong> ' . $stockData['date'], $emailContent);
+        $this->assertStringContainsString('<strong>Open:</strong> ' . $stockData['open'], $emailContent);
+        $this->assertStringContainsString('<strong>Close:</strong> ' . $stockData['close'], $emailContent);
+        $this->assertStringContainsString('<strong>High:</strong> ' . $stockData['high'], $emailContent);
+        $this->assertStringContainsString('<strong>Low:</strong> ' . $stockData['low'], $emailContent);
     }
 }

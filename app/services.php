@@ -6,6 +6,7 @@ use Symfony\Component\Mailer\Mailer;
 use Symfony\Component\Mailer\Transport;
 use Symfony\Component\Mime\Email;
 use App\Services\MessageQueue;
+use App\Services\StockApiService;
 
 return function (ContainerBuilder $containerBuilder) {
     $containerBuilder->addDefinitions([
@@ -35,6 +36,10 @@ return function (ContainerBuilder $containerBuilder) {
         
         MessageQueue::class => function() {
             return new MessageQueue();
+        },
+        
+        StockApiService::class => function() {
+            return new StockApiService();
         },
     ]);
 };

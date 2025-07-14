@@ -2,6 +2,24 @@
 
 A REST API for tracking stock market values built with Slim Framework 4, PHP 8.2, and MySQL.
 
+## Table of Contents
+
+- [Project Overview](#project-overview)
+- [Getting Started](#getting-started)
+  - [Prerequisites](#prerequisites)
+  - [Setup Instructions](#setup-instructions)
+- [API Documentation](#api-documentation)
+- [Stock API Features](#stock-api-features)
+- [Email System](#email-system)
+- [Available Endpoints](#available-endpoints)
+  - [Authentication](#authentication)
+- [Database Migrations and Seeders](#database-migrations-and-seeders)
+- [Running Tests](#running-tests)
+  - [Running Tests with Code Coverage](#running-tests-with-code-coverage)
+- [Project Structure](#project-structure)
+- [Development](#development)
+- [Contributing](#contributing)
+
 ## Project Overview
 
 This project is a RESTful API that provides endpoints for tracking stock market values. It's built using:
@@ -44,6 +62,55 @@ This project uses OpenAPI/Swagger for API documentation. You can access the docu
 - JSON format: http://localhost:8080/api/documentation
 - Swagger UI: http://localhost:8080/swagger
 
+## Stock API Features
+
+The Stock API provides the following features:
+
+1. **Stock Data Retrieval**: Query real-time stock information using the `/stock?q={symbol}` endpoint
+   - Example: `/stock?q=AAPL.US` retrieves Apple Inc. stock data
+   - Returns data including symbol, name, open, high, low, and close values
+   - Data is sourced from the [Stooq API](https://stooq.com/), a free financial data provider
+
+2. **Stock Query History**: View your past stock queries using the `/history` endpoint
+   - Returns a list of all stock queries made by the authenticated user
+   - Results are ordered by most recent first
+
+3. **Data Persistence**: All stock queries are saved to the database for historical tracking
+   - Each query is associated with the authenticated user
+   - Includes timestamp information for when the query was made
+   - Database schema includes:
+     - `id`: Unique identifier for the query
+     - `user_id`: Foreign key to the users table
+     - `symbol`: Stock symbol (e.g., 'AAPL.US')
+     - `name`: Company name (e.g., 'APPLE')
+     - `open`: Opening price
+     - `high`: Highest price
+     - `low`: Lowest price
+     - `close`: Closing price
+     - `created_at`: When the query was made
+     - `updated_at`: When the record was last updated
+
+4. **Symbol Format**: Stock symbols should be provided in the format used by Stooq
+   - US stocks: Add `.US` suffix (e.g., `AAPL.US`, `MSFT.US`)
+   - For other markets, check the [Stooq website](https://stooq.com/) for the correct symbol format
+
+5. **Response Format**:
+   - All API responses follow a consistent JSON format
+   - Success responses include `success: true`, `message`, and `data` fields
+   - Error responses include `success: false`, `message`, and `error` fields
+   - Stock data includes: symbol, name, open, high, low, and close values
+
+6. **Error Handling**:
+   - Missing symbol parameter: Returns 400 Bad Request
+   - Invalid symbol or no data available: Returns 404 Not Found
+   - Successful requests: Returns 200 OK with stock data
+
+7. **Security Considerations**:
+   - All stock API endpoints are protected with JWT authentication
+   - Users can only access their own stock query history
+   - API requests are validated to prevent injection attacks
+   - Sensitive operations require a valid JWT token
+
 ## Email System
 
 The application includes an email system that uses RabbitMQ for asynchronous email processing:
@@ -82,6 +149,8 @@ The application includes an email system that uses RabbitMQ for asynchronous ema
 ### Protected Endpoints (JWT Authentication)
 
 - `GET /bye/{name}` - Returns a goodbye message
+- `GET /stock?q={symbol}` - Returns stock information for the specified symbol
+- `GET /history` - Returns the user's stock query history
 
 ### Authentication
 
@@ -299,6 +368,47 @@ docker-compose exec app vendor/bin/phpunit
 docker-compose exec app vendor/bin/phpunit tests/HelloTest.php
 ```
 
+### Running Tests with Code Coverage
+
+To generate a code coverage report, you'll need to install Xdebug in your Docker environment first. Add the following to your Dockerfile:
+
+```dockerfile
+# Install Xdebug for code coverage
+RUN pecl install xdebug && docker-php-ext-enable xdebug
+RUN echo "xdebug.mode=coverage" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini
+```
+
+Then rebuild your Docker container:
+
+```bash
+docker-compose down
+docker-compose build app
+docker-compose up -d
+```
+
+Update your phpunit.xml file to include coverage configuration:
+
+```xml
+<coverage>
+    <include>
+        <directory suffix=".php">src</directory>
+    </include>
+    <report>
+        <html outputDirectory="coverage/html"/>
+        <clover outputFile="coverage/clover.xml"/>
+        <text outputFile="php://stdout" showUncoveredFiles="false"/>
+    </report>
+</coverage>
+```
+
+Now you can run tests with code coverage:
+
+```bash
+docker-compose exec app vendor/bin/phpunit --coverage-html=coverage
+```
+
+The coverage report will be generated in the `coverage` directory. You can open `coverage/html/index.html` in your browser to view a detailed coverage report.
+
 ### Running a Specific Test Method
 
 ```bash
@@ -358,3 +468,17 @@ docker-compose logs -f
 ```
 
 PHP error logs are available in the `php-errors.log` file in the project root.
+
+## Contributing
+
+Contributions to this project are welcome. Please follow these steps:
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Make your changes
+4. Run tests to ensure they pass
+5. Commit your changes (`git commit -m 'Add some amazing feature'`)
+6. Push to the branch (`git push origin feature/amazing-feature`)
+7. Open a Pull Request
+
+Please ensure your code follows the existing coding style and includes appropriate tests.

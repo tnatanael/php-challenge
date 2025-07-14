@@ -6,6 +6,7 @@ namespace Tests;
 
 use App\Models\User;
 use Slim\Exception\HttpUnauthorizedException;
+use Tests\Factories\UserFactory;
 
 /**
  * Class UserTest
@@ -17,6 +18,11 @@ class UserTest extends BaseTestCase
      * @var \Slim\App
      */
     protected $app;
+    
+    /**
+     * @var UserFactory
+     */
+    protected $userFactory;
 
     /**
      * @throws \Exception
@@ -26,10 +32,12 @@ class UserTest extends BaseTestCase
         parent::setUp();
 
         $this->app = $this->getAppInstance();
+        $this->userFactory = UserFactory::new();
         
         // Clean up test users from previous test runs
-        User::where('email', 'test@example.com')->delete();
-        User::where('email', 'updated@example.com')->delete();
+        User::where('email', $this->userFactory->getDefaults()['email'])->delete();
+        User::where('email', $this->userFactory->getUpdatedDefaults()['email'])->delete();
+        User::where('email', $this->userFactory->getAnotherDefaults()['email'])->delete();
     }
 
     /**
@@ -81,10 +89,7 @@ class UserTest extends BaseTestCase
             'Content-Type' => 'application/json'
         ];
         
-        $userData = json_encode([
-            'email' => 'test@example.com',
-            'password' => 'password123'
-        ]);
+        $userData = $this->userFactory->toJson();
         
         $request = $this->createRequest('POST', '/users', $headers);
         $request->getBody()->write($userData);
@@ -97,7 +102,7 @@ class UserTest extends BaseTestCase
         $this->assertEquals(201, $response->getStatusCode());
         $this->assertTrue($payload['success']);
         $this->assertEquals('User created successfully', $payload['message']);
-        $this->assertEquals('test@example.com', $payload['data']['email']);
+        $this->assertEquals($this->userFactory->getDefaults()['email'], $payload['data']['email']);
         $this->assertArrayNotHasKey('password', $payload['data']); // Password should be hidden
     }
 
@@ -114,8 +119,9 @@ class UserTest extends BaseTestCase
             'Content-Type' => 'application/json'
         ];
         
+        // Create a user with only email (missing password)
         $userData = json_encode([
-            'email' => 'test@example.com'
+            'email' => $this->userFactory->getDefaults()['email']
             // Missing password
         ]);
         
@@ -148,10 +154,9 @@ class UserTest extends BaseTestCase
             'Content-Type' => 'application/json'
         ];
         
-        $userData = json_encode([
-            'email' => 'test@example.com',
-            'password' => 'anotherpassword'
-        ]);
+        $userData = $this->userFactory
+            ->withPassword('anotherpassword')
+            ->toJson();
         
         $request = $this->createRequest('POST', '/users', $headers);
         $request->getBody()->write($userData);
@@ -175,7 +180,7 @@ class UserTest extends BaseTestCase
         $this->testCreateUserWithJwtAuth();
         
         // Get the user ID
-        $user = User::where('email', 'test@example.com')->first();
+        $user = User::where('email', $this->userFactory->getDefaults()['email'])->first();
         $userId = $user->id;
         
         // Arrange
@@ -191,7 +196,7 @@ class UserTest extends BaseTestCase
         $this->assertEquals(200, $response->getStatusCode());
         $this->assertTrue($payload['success']);
         $this->assertEquals('User retrieved successfully', $payload['message']);
-        $this->assertEquals('test@example.com', $payload['data']['email']);
+        $this->assertEquals($this->userFactory->getDefaults()['email'], $payload['data']['email']);
         $this->assertEquals($userId, $payload['data']['id']);
     }
 
@@ -224,7 +229,7 @@ class UserTest extends BaseTestCase
         $this->testCreateUserWithJwtAuth();
         
         // Get the user ID
-        $user = User::where('email', 'test@example.com')->first();
+        $user = User::where('email', $this->userFactory->getDefaults()['email'])->first();
         $userId = $user->id;
         
         // Arrange
@@ -235,10 +240,7 @@ class UserTest extends BaseTestCase
             'Content-Type' => 'application/json'
         ];
         
-        $updateData = json_encode([
-            'email' => 'updated@example.com',
-            'password' => 'newpassword123'
-        ]);
+        $updateData = $this->userFactory->toUpdatedJson();
         
         $request = $this->createRequest('PUT', "/users/{$userId}", $headers);
         $request->getBody()->write($updateData);
@@ -251,7 +253,7 @@ class UserTest extends BaseTestCase
         $this->assertEquals(200, $response->getStatusCode());
         $this->assertTrue($payload['success']);
         $this->assertEquals('User updated successfully', $payload['message']);
-        $this->assertEquals('updated@example.com', $payload['data']['email']);
+        $this->assertEquals($this->userFactory->getUpdatedDefaults()['email'], $payload['data']['email']);
         $this->assertEquals($userId, $payload['data']['id']);
     }
 
@@ -271,22 +273,19 @@ class UserTest extends BaseTestCase
             'Content-Type' => 'application/json'
         ];
         
-        $userData = json_encode([
-            'email' => 'another@example.com',
-            'password' => 'password123'
-        ]);
+        $anotherUser = $this->userFactory->toAnotherJson();
         
         $request = $this->createRequest('POST', '/users', $headers);
-        $request->getBody()->write($userData);
+        $request->getBody()->write($anotherUser);
         $this->app->handle($request);
         
         // Get the second user ID
-        $user2 = User::where('email', 'another@example.com')->first();
+        $user2 = User::where('email', $this->userFactory->getAnotherDefaults()['email'])->first();
         $userId2 = $user2->id;
         
         // Try to update second user with first user's email
         $updateData = json_encode([
-            'email' => 'test@example.com'
+            'email' => $this->userFactory->getDefaults()['email']
         ]);
         
         $request = $this->createRequest('PUT', "/users/{$userId2}", $headers);
@@ -300,9 +299,6 @@ class UserTest extends BaseTestCase
         $this->assertEquals(400, $response->getStatusCode());
         $this->assertFalse($payload['success']);
         $this->assertEquals('Email already in use', $payload['message']);
-        
-        // Clean up
-        User::where('email', 'another@example.com')->delete();
     }
 
     /**
@@ -314,7 +310,7 @@ class UserTest extends BaseTestCase
         $this->testCreateUserWithJwtAuth();
         
         // Get the user ID
-        $user = User::where('email', 'test@example.com')->first();
+        $user = User::where('email', $this->userFactory->getDefaults()['email'])->first();
         $userId = $user->id;
         
         // Arrange
@@ -353,5 +349,68 @@ class UserTest extends BaseTestCase
         $this->assertEquals(404, $response->getStatusCode());
         $this->assertFalse($payload['success']);
         $this->assertEquals('User not found', $payload['message']);
+    }
+
+    /**
+     * Test user login with valid credentials
+     */
+    public function testLoginWithValidCredentials(): void
+    {
+        // First create a user
+        $this->testCreateUserWithJwtAuth();
+        
+        // Arrange
+        $headers = [
+            'HTTP_ACCEPT' => 'application/json',
+            'Content-Type' => 'application/json'
+        ];
+        
+        $loginData = json_encode([
+            'email' => $this->userFactory->getDefaults()['email'],
+            'password' => $this->userFactory->getDefaults()['password']
+        ]);
+        
+        $request = $this->createRequest('POST', '/auth/login', $headers);
+        $request->getBody()->write($loginData);
+
+        // Act
+        $response = $this->app->handle($request);
+        $payload = json_decode((string)$response->getBody(), true);
+
+        // Assert
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertTrue($payload['success']);
+        $this->assertEquals('Login successful', $payload['message']);
+        $this->assertArrayHasKey('token', $payload['data']);
+        $this->assertNotEmpty($payload['data']['token']);
+    }
+
+    /**
+     * Test user login with invalid credentials
+     */
+    public function testLoginWithInvalidCredentials(): void
+    {
+        // First create a user
+        $this->testCreateUserWithJwtAuth();
+        
+        // Arrange
+        $headers = [
+            'HTTP_ACCEPT' => 'application/json',
+            'Content-Type' => 'application/json'
+        ];
+        
+        $loginData = json_encode([
+            'email' => $this->userFactory->getDefaults()['email'],
+            'password' => 'wrongpassword'
+        ]);
+        
+        $request = $this->createRequest('POST', '/auth/login', $headers);
+        $request->getBody()->write($loginData);
+    
+        // Assert that the request throws an HttpUnauthorizedException
+        $this->expectException(\Slim\Exception\HttpUnauthorizedException::class);
+    
+        // Act
+        $this->app->handle($request);
     }
 }

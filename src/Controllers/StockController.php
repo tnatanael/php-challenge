@@ -8,6 +8,7 @@ use App\DTOs\SuccessResponse;
 use App\DTOs\ErrorResponse;
 use App\Models\StockQuery;
 use App\Services\MessageQueue;
+use App\Services\StockApiService;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use OpenApi\Attributes as OA;
@@ -28,12 +29,16 @@ class StockController
     /**
      * StockController constructor.
      */
-    public function __construct(?Mailer $mailer, MessageQueue $messageQueue)
+    // Add to constructor
+    private $stockApiService;
+    
+    public function __construct(?Mailer $mailer, MessageQueue $messageQueue, StockApiService $stockApiService)
     {
         $this->mailer = $mailer;
         $this->messageQueue = $messageQueue;
+        $this->stockApiService = $stockApiService;
     }
-
+    
     #[OA\Get(
         path: "/stock",
         summary: "Get a stock quote",
@@ -165,7 +170,10 @@ class StockController
     private function fetchStockData(string $symbol): ?array
     {
         $url = "https://stooq.com/q/l/?s={$symbol}&f=sd2t2ohlcvn&h&e=csv";
-        $csvData = file_get_contents($url);
+        // In fetchStockData method, replace:
+        // $csvData = file_get_contents($url);
+        // with:
+        $csvData = $this->stockApiService->fetchFromApi($url);
         
         if (!$csvData) {
             return null;

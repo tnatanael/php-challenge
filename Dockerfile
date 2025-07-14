@@ -1,7 +1,6 @@
 FROM php:8.2-fpm
 
 # Install system dependencies
-# Add this to your existing apt-get install command
 RUN apt-get update && apt-get install -y \
     git \
     curl \
@@ -19,8 +18,14 @@ RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 # Install PHP extensions
 RUN docker-php-ext-install pdo_mysql pdo_sqlite mbstring exif pcntl bcmath sockets
 
+# Install Xdebug for code coverage
+RUN pecl install xdebug && docker-php-ext-enable xdebug
+
 # Add custom PHP configuration
 COPY php-custom.ini /usr/local/etc/php/conf.d/php-custom.ini
+
+# Configure Xdebug for code coverage
+RUN echo "xdebug.mode=coverage" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini
 
 # Configure Git for container use
 RUN git config --global --add safe.directory /var/www/html
