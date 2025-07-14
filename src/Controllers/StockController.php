@@ -45,7 +45,21 @@ class StockController
     #[OA\Response(
         response: 200,
         description: "Returns stock information",
-        content: new OA\JsonContent(ref: "#/components/schemas/StockQuery")
+        content: new OA\JsonContent(
+            allOf: [
+                new OA\Schema(ref: "#/components/schemas/ApiResponse"),
+                new OA\Schema(properties: [
+                    new OA\Property(
+                        property: "data",
+                        ref: "#/components/schemas/StockQuery"
+                    ),
+                    new OA\Property(
+                        property: "message",
+                        example: "Stock quote retrieved successfully"
+                    )
+                ])
+            ]
+        )
     )]
     #[OA\Response(
         response: 400,
@@ -119,7 +133,22 @@ class StockController
     #[OA\Response(
         response: 200,
         description: "Returns stock query history",
-        content: new OA\JsonContent(type: "array", items: new OA\Items(ref: "#/components/schemas/StockQuery"))
+        content: new OA\JsonContent(
+            allOf: [
+                new OA\Schema(ref: "#/components/schemas/ApiResponse"),
+                new OA\Schema(properties: [
+                    new OA\Property(
+                        property: "data",
+                        type: "array",
+                        items: new OA\Items(ref: "#/components/schemas/StockQuery")
+                    ),
+                    new OA\Property(
+                        property: "message",
+                        example: "Stock query history retrieved successfully"
+                    )
+                ])
+            ]
+        )
     )]
     #[OA\Response(
         response: 401,

@@ -425,7 +425,6 @@ Available test methods:
 - `app/` - Application configuration and setup
   - `routes.php` - API route definitions
   - `services.php` - Dependency injection container configuration
-  - `auth.php` - Authentication middleware setup
 - `public/` - Web server entry point
   - `index.php` - Application entry point
 - `src/Database/Schema/` - Database migration and seeding system

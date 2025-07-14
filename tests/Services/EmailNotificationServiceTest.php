@@ -7,28 +7,38 @@ namespace Tests\Services;
 use App\Services\EmailNotificationService;
 use App\Services\MessageQueue;
 use App\Services\TemplateRenderer;
+use Faker\Factory;
 use PHPUnit\Framework\TestCase;
-use Tests\Factories\StockFactory;
 
 class EmailNotificationServiceTest extends TestCase
 {
+    /** @var EmailNotificationService */
     private EmailNotificationService $emailNotificationService;
+    
+    /** @var MessageQueue&\PHPUnit\Framework\MockObject\MockObject */
     private MessageQueue $messageQueue;
+    
+    /** @var TemplateRenderer&\PHPUnit\Framework\MockObject\MockObject */
     private TemplateRenderer $templateRenderer;
-    private StockFactory $stockFactory;
+    
+    private $faker;
     private array $config;
 
     protected function setUp(): void
     {
         parent::setUp();
         
-        $this->stockFactory = StockFactory::new();
+        $this->faker = Factory::create();
         
         // Create mock for MessageQueue
-        $this->messageQueue = $this->createMock(MessageQueue::class);
+        /** @var MessageQueue&\PHPUnit\Framework\MockObject\MockObject $messageQueueMock */
+        $messageQueueMock = $this->createMock(MessageQueue::class);
+        $this->messageQueue = $messageQueueMock;
         
         // Create mock for TemplateRenderer
-        $this->templateRenderer = $this->createMock(TemplateRenderer::class);
+        /** @var TemplateRenderer&\PHPUnit\Framework\MockObject\MockObject $templateRendererMock */
+        $templateRendererMock = $this->createMock(TemplateRenderer::class);
+        $this->templateRenderer = $templateRendererMock;
         
         // Set up config
         $this->config = [
@@ -43,13 +53,31 @@ class EmailNotificationServiceTest extends TestCase
             $this->config
         );
     }
+    
+    /**
+     * Generate stock data for email template
+     *
+     * @return array
+     */
+    private function getEmailTemplateData(): array
+    {
+        return [
+            'symbol' => $this->faker->randomElement(['AAPL.US', 'MSFT.US', 'GOOGL.US', 'AMZN.US']),
+            'name' => $this->faker->company(),
+            'date' => $this->faker->date('Y-m-d'),
+            'open' => $this->faker->randomFloat(2, 100, 1000),
+            'high' => $this->faker->randomFloat(2, 100, 1000),
+            'low' => $this->faker->randomFloat(2, 100, 1000),
+            'close' => $this->faker->randomFloat(2, 100, 1000)
+        ];
+    }
 
     public function testSendReturnsSuccessWhenMessageQueuePublishesSuccessfully(): void
     {
         // Arrange
         $recipient = 'recipient@example.com';
         $subject = 'Stock Quote';
-        $data = $this->stockFactory->getEmailTemplateData();
+        $data = $this->getEmailTemplateData();
         $renderedTemplate = '<html>Rendered Email Template</html>';
         
         $this->templateRenderer->expects($this->once())
@@ -82,7 +110,7 @@ class EmailNotificationServiceTest extends TestCase
         // Arrange
         $recipient = 'recipient@example.com';
         $subject = 'Stock Quote';
-        $data = $this->stockFactory->getEmailTemplateData();
+        $data = $this->getEmailTemplateData();
         $renderedTemplate = '<html>Rendered Email Template</html>';
         
         $this->templateRenderer->expects($this->once())
@@ -106,7 +134,7 @@ class EmailNotificationServiceTest extends TestCase
         // Arrange
         $recipient = 'recipient@example.com';
         $subject = 'Stock Quote';
-        $data = $this->stockFactory->getEmailTemplateData();
+        $data = $this->getEmailTemplateData();
         $renderedTemplate = '<html>Rendered Email Template</html>';
         
         // Create service with empty config

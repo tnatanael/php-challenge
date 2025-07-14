@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Config;
 
+use App\Database\Schema\MigrationRunner;
+use App\Database\Schema\SeederRunner;
 use Illuminate\Container\Container;
 use Illuminate\Database\Capsule\Manager as Capsule;
 use Illuminate\Events\Dispatcher;
@@ -32,35 +34,49 @@ class TestDatabase
         // Setup the Eloquent ORM
         $capsule->bootEloquent();
         
-        // Create the tables for testing
-        $capsule->schema()->create('users', function ($table) {
-            $table->increments('id');
-            $table->string('email')->unique();
-            $table->string('password');
-            $table->timestamps();
-        });
-
-        // Create a default user for testing
-        $capsule->table('users')->insert([
-            'id' => 1,
-            'email' => $_ENV['DEFAULT_USERNAME'] ?? 'user@example.com',
-            'password' => password_hash($_ENV['DEFAULT_PASSWORD'] ?? 'secret', PASSWORD_DEFAULT),
-            'created_at' => date('Y-m-d H:i:s'),
-            'updated_at' => date('Y-m-d H:i:s'),
-        ]);
+        // Suppress output during migrations and seeding
+        ob_start();
         
-        $capsule->schema()->create('stock_queries', function ($table) {
-            $table->increments('id');
-            $table->integer('user_id')->unsigned();
-            $table->string('symbol');
-            $table->string('name')->nullable();
-            $table->decimal('open', 10, 2)->nullable();
-            $table->decimal('high', 10, 2)->nullable();
-            $table->decimal('low', 10, 2)->nullable();
-            $table->decimal('close', 10, 2)->nullable();
-            $table->timestamps();
+        try {
+            // Run migrations using the MigrationRunner
+            $migrationRunner = new MigrationRunner();
+            $migrationRunner->scanMigrations(__DIR__ . '/../../src/Database/Schema/Migrations');
+            $migrationRunner->up();
             
-            $table->foreign('user_id')->references('id')->on('users');
-        });
+            // Run seeders using the SeederRunner
+            $seederRunner = new SeederRunner();
+            $seederRunner->scanSeeders(__DIR__ . '/../../src/Database/Schema/Seeders');
+            $seederRunner->run();
+        } finally {
+            // Discard the output
+            ob_end_clean();
+        }
+    }
+    
+    /**
+     * Reset the database by dropping all tables and re-running migrations and seeders
+     * This can be called in tearDown methods to ensure a clean state between tests
+     */
+    public static function reset(): void
+    {
+        // Suppress output during reset
+        ob_start();
+        
+        try {
+            // Drop all tables
+            $tables = Capsule::select('SELECT name FROM sqlite_master WHERE type="table"');
+            
+            foreach ($tables as $table) {
+                if ($table->name !== 'sqlite_sequence') {
+                    Capsule::schema()->drop($table->name);
+                }
+            }
+            
+            // Re-run migrations and seeders
+            self::boot();
+        } finally {
+            // Discard the output
+            ob_end_clean();
+        }
     }
 }

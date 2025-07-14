@@ -8,27 +8,40 @@ use App\Models\StockQuery;
 use App\Repositories\StockQueryRepository;
 use App\Services\Interfaces\StockApiServiceInterface;
 use App\Services\StockService;
+use Faker\Factory;
 use PHPUnit\Framework\TestCase;
-use Tests\Factories\StockFactory;
 
 class StockServiceTest extends TestCase
 {
     private StockService $stockService;
+    
+    /** @var StockApiServiceInterface&\PHPUnit\Framework\MockObject\MockObject */
     private StockApiServiceInterface $stockApiService;
+    
+    /** @var StockQueryRepository&\PHPUnit\Framework\MockObject\MockObject */
     private StockQueryRepository $stockQueryRepository;
-    private StockFactory $stockFactory;
+    
+    private $faker;
+    
+    // Define constants for stock symbols
+    private const APPLE_SYMBOL = 'AAPL.US';
+    private const INVALID_SYMBOL = 'INVALID';
 
     protected function setUp(): void
     {
         parent::setUp();
         
-        $this->stockFactory = StockFactory::new();
+        $this->faker = Factory::create();
         
         // Create mock for StockApiServiceInterface
-        $this->stockApiService = $this->createMock(StockApiServiceInterface::class);
+        /** @var StockApiServiceInterface&\PHPUnit\Framework\MockObject\MockObject $stockApiServiceMock */
+        $stockApiServiceMock = $this->createMock(StockApiServiceInterface::class);
+        $this->stockApiService = $stockApiServiceMock;
         
         // Create mock for StockQueryRepository
-        $this->stockQueryRepository = $this->createMock(StockQueryRepository::class);
+        /** @var StockQueryRepository&\PHPUnit\Framework\MockObject\MockObject $stockQueryRepositoryMock */
+        $stockQueryRepositoryMock = $this->createMock(StockQueryRepository::class);
+        $this->stockQueryRepository = $stockQueryRepositoryMock;
         
         // Create StockService with mocked dependencies
         $this->stockService = new StockService(
@@ -40,8 +53,8 @@ class StockServiceTest extends TestCase
     public function testGetStockDataReturnsDataFromApi(): void
     {
         // Arrange
-        $symbol = StockFactory::APPLE_SYMBOL;
-        $expectedData = $this->stockFactory->make();
+        $symbol = self::APPLE_SYMBOL;
+        $expectedData = $this->generateAppleStockData();
         
         $this->stockApiService->expects($this->once())
             ->method('fetchStockData')
@@ -58,7 +71,7 @@ class StockServiceTest extends TestCase
     public function testGetStockDataReturnsNullWhenApiReturnsNull(): void
     {
         // Arrange
-        $symbol = StockFactory::INVALID_SYMBOL;
+        $symbol = self::INVALID_SYMBOL;
         
         $this->stockApiService->expects($this->once())
             ->method('fetchStockData')
@@ -75,8 +88,8 @@ class StockServiceTest extends TestCase
     public function testSaveStockQueryCreatesStockQueryRecord(): void
     {
         // Arrange
-        $userId = 1;
-        $stockData = $this->stockFactory->make();
+        $userId = $this->faker->numberBetween(1, 100);
+        $stockData = $this->generateRandomStockData();
         $expectedStockQuery = new StockQuery();
         
         // Set properties on the mock StockQuery
@@ -111,10 +124,10 @@ class StockServiceTest extends TestCase
     public function testGetUserHistoryReturnsHistoryFromRepository(): void
     {
         // Arrange
-        $userId = 1;
+        $userId = $this->faker->numberBetween(1, 100);
         $expectedHistory = [
-            $this->stockFactory->make(),
-            $this->stockFactory->makeMicrosoft()
+            $this->generateRandomStockData(),
+            $this->generateMicrosoftStockData()
         ];
         
         $this->stockQueryRepository->expects($this->once())
@@ -127,5 +140,56 @@ class StockServiceTest extends TestCase
         
         // Assert
         $this->assertSame($expectedHistory, $result);
+    }
+    
+    /**
+     * Generate random stock data
+     *
+     * @return array
+     */
+    private function generateRandomStockData(): array
+    {
+        return [
+            'symbol' => $this->faker->randomElement(['AAPL.US', 'AMZN.US', 'GOOGL.US', 'TSLA.US']),
+            'name' => $this->faker->company(),
+            'open' => $this->faker->randomFloat(2, 100, 1000),
+            'high' => $this->faker->randomFloat(2, 100, 1000),
+            'low' => $this->faker->randomFloat(2, 100, 1000),
+            'close' => $this->faker->randomFloat(2, 100, 1000),
+        ];
+    }
+    
+    /**
+     * Generate Apple stock data
+     *
+     * @return array
+     */
+    private function generateAppleStockData(): array
+    {
+        return [
+            'symbol' => self::APPLE_SYMBOL,
+            'name' => 'APPLE',
+            'open' => $this->faker->randomFloat(2, 100, 200),
+            'high' => $this->faker->randomFloat(2, 100, 200),
+            'low' => $this->faker->randomFloat(2, 100, 200),
+            'close' => $this->faker->randomFloat(2, 100, 200),
+        ];
+    }
+    
+    /**
+     * Generate Microsoft stock data
+     *
+     * @return array
+     */
+    private function generateMicrosoftStockData(): array
+    {
+        return [
+            'symbol' => 'MSFT.US',
+            'name' => 'MICROSOFT',
+            'open' => $this->faker->randomFloat(2, 200, 400),
+            'high' => $this->faker->randomFloat(2, 200, 400),
+            'low' => $this->faker->randomFloat(2, 200, 400),
+            'close' => $this->faker->randomFloat(2, 200, 400),
+        ];
     }
 }

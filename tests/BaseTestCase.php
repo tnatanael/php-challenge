@@ -65,7 +65,7 @@ class BaseTestCase extends PHPUnit_TestCase
     {
         $jwtSecret = $_ENV["JWT_SECRET"] ?? 'your-secret-key';
         $jwtExpirationTime = (int)($_ENV['JWT_EXPIRATION'] ?? 3600);
-        
+
         $issuedAt = time();
         $expirationTime = $issuedAt + $jwtExpirationTime;
         
@@ -111,5 +111,13 @@ class BaseTestCase extends PHPUnit_TestCase
         }
     
         return new SlimRequest($method, $uri, $h, $cookies, $serverParams, $stream);
+    }
+
+    protected function tearDown(): void
+    {
+        parent::tearDown();
+        
+        // Reset the database to ensure a clean state for the next test
+        TestDatabase::reset();
     }
 }

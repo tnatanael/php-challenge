@@ -4,8 +4,37 @@ declare(strict_types=1);
 
 namespace App\DTOs;
 
+use OpenApi\Attributes as OA;
+
 class ApiResponse implements \JsonSerializable
 {
+    // Add OpenAPI schema definition at the top of the class
+    #[OA\Schema(
+        schema: "ApiResponse",
+        title: "API Response",
+        description: "Standard API response format"
+    )]
+    
+    #[OA\Property(
+        property: "success",
+        type: "boolean",
+        description: "Indicates if the operation was successful",
+        example: true
+    )]
+    
+    #[OA\Property(
+        property: "message",
+        type: "string",
+        description: "Response message",
+        example: "Operation successful"
+    )]
+    
+    #[OA\Property(
+        property: "data",
+        type: "object",
+        description: "Response data"
+    )]
+
     /**
      * @var bool
      */
@@ -76,4 +105,6 @@ class ApiResponse implements \JsonSerializable
     {
         return $this->toArray();
     }
+    
+    
 }

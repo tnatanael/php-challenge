@@ -8,12 +8,13 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Http\Server\RequestHandlerInterface as RequestHandler;
 
 return function (App $app) {
-    // Only keep the middleware to throw 401 with correct slim exception
+    // Only keep the middleware to throw 401 with correct slim exception and hide details
     $app->add(function (Request $request, RequestHandler $handler) {
         $response = $handler->handle($request);
                 
         $statusCode = $response->getStatusCode();
 
+        // Be carefull here since it hides some framework internal errors...
         if ($statusCode == 401) {
             throw new HttpUnauthorizedException($request);
         }

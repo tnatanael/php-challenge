@@ -6,18 +6,34 @@ namespace App\Controllers;
 
 use App\DTOs\SuccessResponse;
 use App\DTOs\ErrorResponse;
-use App\Models\User;
+use App\Repositories\Interfaces\UserRepositoryInterface;
+use App\Services\Interfaces\UserServiceInterface;
+use App\Validators\UserValidator;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use OpenApi\Attributes as OA;
 
 class UserController
 {
+    private UserRepositoryInterface $userRepository;
+    private UserServiceInterface $userService;
+    private UserValidator $validator;
+
     /**
      * UserController constructor.
+     * 
+     * @param UserRepositoryInterface $userRepository
+     * @param UserServiceInterface $userService
+     * @param UserValidator $validator
      */
-    public function __construct()
-    {
+    public function __construct(
+        UserRepositoryInterface $userRepository,
+        UserServiceInterface $userService,
+        UserValidator $validator
+    ) {
+        $this->userRepository = $userRepository;
+        $this->userService = $userService;
+        $this->validator = $validator;
     }
 
     #[OA\Get(
@@ -29,7 +45,22 @@ class UserController
     #[OA\Response(
         response: 200,
         description: "Returns a list of all users",
-        content: new OA\JsonContent(type: "array", items: new OA\Items(ref: "#/components/schemas/User"))
+        content: new OA\JsonContent(
+            allOf: [
+                new OA\Schema(ref: "#/components/schemas/ApiResponse"),
+                new OA\Schema(properties: [
+                    new OA\Property(
+                        property: "data",
+                        type: "array",
+                        items: new OA\Items(ref: "#/components/schemas/User")
+                    ),
+                    new OA\Property(
+                        property: "message",
+                        example: "Users retrieved successfully"
+                    )
+                ])
+            ]
+        )
     )]
     #[OA\Response(
         response: 401,
@@ -37,14 +68,8 @@ class UserController
     )]
     public function getAll(Request $request, Response $response): Response
     {
-        $users = User::all();
-        $successResponse = new SuccessResponse($users, 'Users retrieved successfully');
-        
-        $response->getBody()->write(json_encode($successResponse));
-        
-        return $response
-            ->withHeader('Content-Type', 'application/json')
-            ->withStatus(200);
+        $users = $this->userRepository->findAll();
+        return $this->jsonResponse($response, $users, 'Users retrieved successfully', 200);
     }
     
     #[OA\Post(
@@ -60,7 +85,21 @@ class UserController
     #[OA\Response(
         response: 201,
         description: "User created successfully",
-        content: new OA\JsonContent(ref: "#/components/schemas/User")
+        content: new OA\JsonContent(
+            allOf: [
+                new OA\Schema(ref: "#/components/schemas/ApiResponse"),
+                new OA\Schema(properties: [
+                    new OA\Property(
+                        property: "data",
+                        ref: "#/components/schemas/User"
+                    ),
+                    new OA\Property(
+                        property: "message",
+                        example: "User created successfully"
+                    )
+                ])
+            ]
+        )
     )]
     #[OA\Response(
         response: 400,
@@ -74,42 +113,32 @@ class UserController
     {
         $data = $request->getParsedBody();
         
-        // Validate required fields
-        if (!isset($data['email']) || !isset($data['password'])) {
-            $errorResponse = new ErrorResponse('Email and password are required', 400);
-            $response->getBody()->write(json_encode($errorResponse));
-            
-            return $response
-                ->withHeader('Content-Type', 'application/json')
-                ->withStatus(400);
+        // Validate input data
+        $validationResult = $this->validator->validateForCreation($data);
+        if (!$validationResult->isValid()) {
+            return $this->errorResponse(
+                $response, 
+                $validationResult->getFirstError(), 
+                400
+            );
         }
         
-        // Check if email already exists
-        $existingUser = User::where('email', $data['email'])->first();
-        if ($existingUser) {
-            $errorResponse = new ErrorResponse('Email already in use', 400);
-            $response->getBody()->write(json_encode($errorResponse));
-            
-            return $response
-                ->withHeader('Content-Type', 'application/json')
-                ->withStatus(400);
+        // Create user through service
+        $result = $this->userService->createUser($data);
+        if (!$result->isSuccess()) {
+            return $this->errorResponse(
+                $response, 
+                $result->getMessage(), 
+                400
+            );
         }
         
-        // Hash password
-        $data['password'] = password_hash($data['password'], PASSWORD_DEFAULT);
-        
-        // Create user
-        $user = User::create([
-            'email' => $data['email'],
-            'password' => $data['password']
-        ]);
-        
-        $successResponse = new SuccessResponse($user, 'User created successfully');
-        $response->getBody()->write(json_encode($successResponse));
-        
-        return $response
-            ->withHeader('Content-Type', 'application/json')
-            ->withStatus(201);
+        return $this->jsonResponse(
+            $response, 
+            $result->getData(), 
+            'User created successfully', 
+            201
+        );
     }
     
     #[OA\Get(
@@ -127,7 +156,21 @@ class UserController
     #[OA\Response(
         response: 200,
         description: "Returns the user",
-        content: new OA\JsonContent(ref: "#/components/schemas/User")
+        content: new OA\JsonContent(
+            allOf: [
+                new OA\Schema(ref: "#/components/schemas/ApiResponse"),
+                new OA\Schema(properties: [
+                    new OA\Property(
+                        property: "data",
+                        ref: "#/components/schemas/User"
+                    ),
+                    new OA\Property(
+                        property: "message",
+                        example: "User retrieved successfully"
+                    )
+                ])
+            ]
+        )
     )]
     #[OA\Response(
         response: 404,
@@ -139,24 +182,14 @@ class UserController
     )]
     public function getOne(Request $request, Response $response, array $args): Response
     {
-        $id = $args['id'];
-        $user = User::find($id);
+        $id = (int)$args['id'];
+        $user = $this->userRepository->findById($id);
         
         if (!$user) {
-            $errorResponse = new ErrorResponse('User not found', 404);
-            $response->getBody()->write(json_encode($errorResponse));
-            
-            return $response
-                ->withHeader('Content-Type', 'application/json')
-                ->withStatus(404);
+            return $this->errorResponse($response, 'User not found', 404);
         }
         
-        $successResponse = new SuccessResponse($user, 'User retrieved successfully');
-        $response->getBody()->write(json_encode($successResponse));
-        
-        return $response
-            ->withHeader('Content-Type', 'application/json')
-            ->withStatus(200);
+        return $this->jsonResponse($response, $user, 'User retrieved successfully', 200);
     }
     
     #[OA\Put(
@@ -178,7 +211,21 @@ class UserController
     #[OA\Response(
         response: 200,
         description: "User updated successfully",
-        content: new OA\JsonContent(ref: "#/components/schemas/User")
+        content: new OA\JsonContent(
+            allOf: [
+                new OA\Schema(ref: "#/components/schemas/ApiResponse"),
+                new OA\Schema(properties: [
+                    new OA\Property(
+                        property: "data",
+                        ref: "#/components/schemas/User"
+                    ),
+                    new OA\Property(
+                        property: "message",
+                        example: "User updated successfully"
+                    )
+                ])
+            ]
+        )
     )]
     #[OA\Response(
         response: 404,
@@ -190,49 +237,36 @@ class UserController
     )]
     public function update(Request $request, Response $response, array $args): Response
     {
-        $id = $args['id'];
-        $user = User::find($id);
-        
-        if (!$user) {
-            $errorResponse = new ErrorResponse('User not found', 404);
-            $response->getBody()->write(json_encode($errorResponse));
-            
-            return $response
-                ->withHeader('Content-Type', 'application/json')
-                ->withStatus(404);
-        }
-        
+        $id = (int)$args['id'];
         $data = $request->getParsedBody();
         
-        // Update email if provided
-        if (isset($data['email'])) {
-            // Check if email already exists for another user
-            $existingUser = User::where('email', $data['email'])->where('id', '!=', $id)->first();
-            if ($existingUser) {
-                $errorResponse = new ErrorResponse('Email already in use', 400);
-                $response->getBody()->write(json_encode($errorResponse));
-                
-                return $response
-                    ->withHeader('Content-Type', 'application/json')
-                    ->withStatus(400);
-            }
-            
-            $user->email = $data['email'];
+        // Validate input data
+        $validationResult = $this->validator->validateForUpdate($data);
+        if (!$validationResult->isValid()) {
+            return $this->errorResponse(
+                $response, 
+                $validationResult->getFirstError(), 
+                400
+            );
         }
         
-        // Update password if provided
-        if (isset($data['password'])) {
-            $user->password = password_hash($data['password'], PASSWORD_DEFAULT);
+        // Update user through service
+        $result = $this->userService->updateUser($id, $data);
+        if (!$result->isSuccess()) {
+            $statusCode = $result->getCode() ?: 400;
+            return $this->errorResponse(
+                $response, 
+                $result->getMessage(), 
+                $statusCode
+            );
         }
         
-        $user->save();
-        
-        $successResponse = new SuccessResponse($user, 'User updated successfully');
-        $response->getBody()->write(json_encode($successResponse));
-        
-        return $response
-            ->withHeader('Content-Type', 'application/json')
-            ->withStatus(200);
+        return $this->jsonResponse(
+            $response, 
+            $result->getData(), 
+            'User updated successfully', 
+            200
+        );
     }
     
     #[OA\Delete(
@@ -261,25 +295,56 @@ class UserController
     )]
     public function delete(Request $request, Response $response, array $args): Response
     {
-        $id = $args['id'];
-        $user = User::find($id);
+        $id = (int)$args['id'];
         
-        if (!$user) {
-            $errorResponse = new ErrorResponse('User not found', 404);
-            $response->getBody()->write(json_encode($errorResponse));
-            
-            return $response
-                ->withHeader('Content-Type', 'application/json')
-                ->withStatus(404);
+        // Delete user through service
+        $result = $this->userService->deleteUser($id);
+        if (!$result->isSuccess()) {
+            $statusCode = $result->getCode() ?: 400;
+            return $this->errorResponse(
+                $response, 
+                $result->getMessage(), 
+                $statusCode
+            );
         }
         
-        $user->delete();
-        
-        $successResponse = new SuccessResponse(null, 'User deleted successfully');
+        return $this->jsonResponse($response, null, 'User deleted successfully', 200);
+    }
+    
+    /**
+     * Create a JSON response
+     *
+     * @param Response $response
+     * @param mixed $data
+     * @param string $message
+     * @param int $statusCode
+     * @return Response
+     */
+    private function jsonResponse(Response $response, $data, string $message, int $statusCode): Response
+    {
+        $successResponse = new SuccessResponse($data, $message);
         $response->getBody()->write(json_encode($successResponse));
         
         return $response
             ->withHeader('Content-Type', 'application/json')
-            ->withStatus(200);
+            ->withStatus($statusCode);
+    }
+    
+    /**
+     * Create an error response
+     *
+     * @param Response $response
+     * @param string $message
+     * @param int $statusCode
+     * @return Response
+     */
+    private function errorResponse(Response $response, string $message, int $statusCode): Response
+    {
+        $errorResponse = new ErrorResponse($message, $statusCode);
+        $response->getBody()->write(json_encode($errorResponse));
+        
+        return $response
+            ->withHeader('Content-Type', 'application/json')
+            ->withStatus($statusCode);
     }
 }

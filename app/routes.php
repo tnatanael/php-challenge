@@ -40,7 +40,8 @@ return function (App $app) {
         $openapi = (new \OpenApi\Generator())->generate([
             __DIR__ . '/../src/Controllers',
             __DIR__ . '/../src/OpenApi',
-            __DIR__ . '/../src/Models'
+            __DIR__ . '/../src/Models',
+            __DIR__ . '/../src/DTOs'  // Add this line
         ]);
         
         // Add JSON_PRETTY_PRINT and ensure proper encoding
