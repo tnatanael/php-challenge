@@ -75,7 +75,14 @@ cd php-challenge
 # 2. Create environment file
 cp .env.sample .env
 
-# 3. Start the application
+# 3. Configure your .env file with appropriate values
+# Important settings to review:
+#   - JWT_SECRET: Set a secure random string for JWT token generation
+#   - DB_PASSWORD: Change the default database password if you want
+#   - MAILER_DSN: Configure your email service (Mailtrap recommended for testing)
+#   - RMQ_ENABLED: Set to 1 to enable asynchronous email processing
+
+# 4. Start the application
 docker-compose up -d
 ```
 
@@ -584,5 +591,6 @@ The application follows a modular architecture that makes it easy to extend:
 ### Troubleshooting
 
 - PHP error logs are available in the `php-errors.log` file in the project root
+- RabbitMQ consumer logs are available in the `consumer.log` file
 - Database connection issues can be resolved by checking the `.env` configuration
 - RabbitMQ connection issues can be verified through the management interface at port 15672
