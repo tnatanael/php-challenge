@@ -9,7 +9,7 @@ services:
     container_name: php_app
     volumes:
       - .:/var/www/html
-      - logs_volume:/var/www/html/logs
+      - ./logs:/var/www/html/logs
     depends_on:
       mysql:
         condition: service_started
@@ -58,7 +58,7 @@ services:
     ports:
       - "3306:3306"
     volumes:
-      - mysql_data:/var/lib/mysql
+      - ./mysql_data:/var/lib/mysql
     networks:
       - app-network
       
@@ -74,7 +74,7 @@ services:
       - RABBITMQ_DEFAULT_PASS=guest
       - RABBITMQ_DEFAULT_VHOST=/
     volumes:
-      - rabbitmq_data:/var/lib/rabbitmq
+      - ./rabbitmq_data:/var/lib/rabbitmq
     networks:
       - app-network
     healthcheck:
@@ -87,8 +87,3 @@ services:
 networks:
   app-network:
     driver: bridge
-
-volumes:
-  mysql_data:
-  rabbitmq_data:
-  logs_volume:
