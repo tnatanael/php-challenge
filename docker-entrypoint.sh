@@ -4,6 +4,12 @@ set -e
 # Change to the correct directory
 cd /var/www/html
 
+# Parse .env file
+if [ -f .env ]; then
+  echo "Loading environment variables from .env file"
+  export $(grep -v '^#' .env | xargs)
+fi
+
 # Run composer update
 composer update
 
