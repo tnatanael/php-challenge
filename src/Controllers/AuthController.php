@@ -52,15 +52,23 @@ class AuthController
         response: 200,
         description: "Login successful",
         content: new OA\JsonContent(
-            properties: [
-                new OA\Property(property: "success", type: "boolean"),
-                new OA\Property(property: "message", type: "string"),
-                new OA\Property(property: "data", properties: [
-                    new OA\Property(property: "token", type: "string"),
-                    new OA\Property(property: "user", ref: "#/components/schemas/User"),
-                ], type: "object"),
-            ],
-            type: "object"
+            allOf: [
+                new OA\Schema(ref: "#/components/schemas/ApiResponse"),
+                new OA\Schema(properties: [
+                    new OA\Property(
+                        property: "data",
+                        properties: [
+                            new OA\Property(property: "token", type: "string"),
+                            new OA\Property(property: "user", ref: "#/components/schemas/User"),
+                        ],
+                        type: "object"
+                    ),
+                    new OA\Property(
+                        property: "message",
+                        example: "Login successful"
+                    )
+                ])
+            ]
         )
     )]
     #[OA\Response(

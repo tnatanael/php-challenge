@@ -2,32 +2,61 @@
 
 A REST API for tracking stock market values built with Slim Framework 4, PHP 8.2, and MySQL.
 
+## Key Features Implemented
+
+- **Stock Data Retrieval**: Real-time stock information from Stooq API
+- **User Authentication**: JWT-based authentication system
+- **Stock Query History**: Track and retrieve user's past stock queries
+- **Email Notifications**: Asynchronous email notifications using RabbitMQ
+- **API Documentation**: OpenAPI/Swagger documentation
+- **Containerized**: Docker and Docker Compose for easy setup
+- **Database Migrations**: Automated database setup and seeding
+- **Unit Tests**: Comprehensive test coverage
+
 ## Table of Contents
 
 - [Project Overview](#project-overview)
+  - [Mandatory Features Implemented](#mandatory-features-implemented)
+  - [Bonus Features Implemented](#bonus-features-implemented)
+  - [Technology Stack](#technology-stack)
 - [Getting Started](#getting-started)
   - [Prerequisites](#prerequisites)
   - [Setup Instructions](#setup-instructions)
-- [API Documentation](#api-documentation)
-- [Stock API Features](#stock-api-features)
-- [Email System](#email-system)
 - [Available Endpoints](#available-endpoints)
+  - [Core API Endpoints (Challenge Requirements)](#core-api-endpoints-challenge-requirements)
+  - [Additional Endpoints](#additional-endpoints)
   - [Authentication](#authentication)
+- [Email System with RabbitMQ Integration](#email-system-with-rabbitmq-integration)
+- [Stock API Features](#stock-api-features)
 - [Database Migrations and Seeders](#database-migrations-and-seeders)
 - [Running Tests](#running-tests)
-  - [Running Tests with Code Coverage](#running-tests-with-code-coverage)
 - [Project Structure](#project-structure)
-- [Development](#development)
-- [Contributing](#contributing)
+- [Development Guidelines](#development-guidelines)
+- [Operational Information](#operational-information)
 
 ## Project Overview
 
-This project is a RESTful API that provides endpoints for tracking stock market values. It's built using:
+This project implements a RESTful API for tracking stock market values, meeting all mandatory and bonus requirements of the PHP Challenge:
 
-- PHP 8.2
-- Slim Framework 4
-- MySQL 8.0
-- Docker and Docker Compose
+### Mandatory Features Implemented
+- ✅ **SQL Database**: MySQL for users and stock query logs
+- ✅ **Authentication System**: Secure user authentication
+- ✅ **User Creation Endpoint**: API for creating new users
+- ✅ **Stock Quote Endpoint**: Real-time stock data with email notifications
+- ✅ **Query History Endpoint**: Track and retrieve user's past stock queries
+
+### Bonus Features Implemented
+- ✅ **Unit Tests**: Comprehensive test coverage
+- ✅ **RabbitMQ Integration**: Asynchronous email processing
+- ✅ **JWT Authentication**: Secure token-based API access
+- ✅ **Docker Containerization**: Easy setup and deployment
+
+### Technology Stack
+- PHP 8.2 with strict typing and attribute-based annotations
+- Slim Framework 4 for routing and middleware
+- MySQL 8.0 with Eloquent ORM for data persistence
+- RabbitMQ for message queuing
+- Symfony Mailer for email delivery
 - OpenAPI/Swagger for API documentation
 
 ## Getting Started
@@ -35,32 +64,32 @@ This project is a RESTful API that provides endpoints for tracking stock market 
 ### Prerequisites
 
 - Docker and Docker Compose installed on your system
-- Git (optional, for cloning the repository)
 
-### Setup Instructions
+### Quick Setup (2 minutes)
 
-1. Clone or download this repository to your local machine
+```bash
+# 1. Clone the repository (or download it)
+git clone https://github.com/yourusername/php-challenge.git
+cd php-challenge
 
-2. Create a `.env` file in the project root (you can copy from `.env.sample`)
+# 2. Create environment file
+cp .env.sample .env
 
-   ```bash
-   cp .env.sample .env
-   ```
+# 3. Start the application
+docker-compose up -d
+```
 
-3. Build and start the Docker containers
+That's it! The application will:
+- Start all necessary containers (PHP, MySQL, RabbitMQ)
+- Run database migrations automatically
+- Create a default user (email: user@example.com, password: user123)
+- Start the email consumer service
 
-   ```bash
-   docker-compose up -d
-   ```
+### Accessing the Application
 
-4. The API will be available at http://localhost:8080
-
-## API Documentation
-
-This project uses OpenAPI/Swagger for API documentation. You can access the documentation at:
-
-- JSON format: http://localhost:8080/api/documentation
-- Swagger UI: http://localhost:8080/swagger
+- **API Endpoints**: http://localhost:8080
+- **API Documentation**: http://localhost:8080/swagger
+- **RabbitMQ Management**: http://localhost:15672 (guest/guest)
 
 ## Stock API Features
 
@@ -111,21 +140,31 @@ The Stock API provides the following features:
    - API requests are validated to prevent injection attacks
    - Sensitive operations require a valid JWT token
 
-## Email System
+## Email System with RabbitMQ Integration
 
-The application includes an email system that uses RabbitMQ for asynchronous email processing:
+The application implements an asynchronous email notification system using RabbitMQ, satisfying the bonus feature requirement:
 
-1. **Email Configuration**: Configure your email settings in the `.env` file:
+### How It Works
+
+1. **Message Queue Architecture**:
+   - When a user requests stock information, the API sends the stock data to a RabbitMQ queue
+   - A separate consumer process reads from the queue and sends emails asynchronously
+   - This decouples the API request handling from email delivery, improving performance
+
+2. **Implementation Components**:
+   - `MessageQueue` service: Handles connection to RabbitMQ and message publishing
+   - `EmailNotificationService`: Prepares email content and publishes to the queue
+   - `EmailConsumer`: Background process that consumes messages and sends emails
+   - `TemplateRenderer`: Renders HTML email templates with stock data
+
+3. **Configuration**: Configure your email and RabbitMQ settings in the `.env` file:
    ```
    # Email Settings
    MAILER_DSN=smtp://username:password@smtp.example.com:587
    MAILER_FROM=your-email@example.com
    MAILER_FROM_NAME="Stock API"
    MAILER_ENABLED=1
-   ```
-
-2. **RabbitMQ Integration**: The system uses RabbitMQ to queue and process emails asynchronously:
-   ```
+   
    # RabbitMQ Settings
    RMQ_ENABLED=1  # Set to 1 to enable RabbitMQ
    RMQ_HOST=rabbitmq
@@ -135,22 +174,72 @@ The application includes an email system that uses RabbitMQ for asynchronous ema
    RMQ_PASSWORD=guest
    ```
 
-3. **Email Consumer**: The application includes an email consumer service that processes emails from the queue. This service runs automatically when the Docker container starts if RabbitMQ is enabled.
+4. **Automatic Consumer**: The email consumer service runs automatically when the Docker container starts if RabbitMQ is enabled, processing any messages in the queue.
 
-4. **Stock API Email Notifications**: When users query stock information, the system can send email notifications with the stock data. The emails are queued in RabbitMQ and processed asynchronously by the email consumer service.
+5. **Fallback Mechanism**: If RabbitMQ is disabled or unavailable, the system gracefully degrades without affecting the API functionality.
 
 ## Available Endpoints
 
-### Public Endpoints
+### Core API Endpoints (Challenge Requirements)
 
-- `GET /hello/{name}` - Returns a greeting message
-- `POST /auth/login` - Authenticates a user and returns a JWT token
+- **User Creation**
+  - `POST /users` - Creates a new user account
+  - Protected by JWT authentication
+  - Accepts email, password, and name
 
-### Protected Endpoints (JWT Authentication)
+- **Stock Quote Retrieval**
+  - `GET /stock?q={symbol}` - Returns real-time stock information
+  - Protected by JWT authentication
+  - Example: `/stock?q=AAPL.US` retrieves Apple Inc. stock data
+  - Sends an email notification with stock data to the requesting user
+  - Response format:
+    ```json
+    {
+      "success": true,
+      "message": "Stock quote retrieved successfully",
+      "data": {
+        "symbol": "AAPL.US",
+        "name": "APPLE",
+        "open": 123.66,
+        "high": 123.66,
+        "low": 122.49,
+        "close": 123
+      }
+    }
+    ```
 
-- `GET /bye/{name}` - Returns a goodbye message
-- `GET /stock?q={symbol}` - Returns stock information for the specified symbol
-- `GET /history` - Returns the user's stock query history
+- **Stock Query History**
+  - `GET /history` - Returns the user's stock query history
+  - Protected by JWT authentication
+  - Returns queries in reverse chronological order (newest first)
+  - Response format:
+    ```json
+    {
+      "success": true,
+      "message": "Stock query history retrieved successfully",
+      "data": [
+        {
+          "date": "2023-04-01T19:20:30Z",
+          "symbol": "AAPL.US",
+          "name": "APPLE",
+          "open": 123.66,
+          "high": 123.66,
+          "low": 122.49,
+          "close": 123
+        },
+        // More history entries...
+      ]
+    }
+    ```
+
+### Additional Endpoints
+
+- `GET /hello/{name}` - Public endpoint, returns a greeting message
+- `GET /bye/{name}` - Protected endpoint, returns a goodbye message
+- `GET /users` - Protected endpoint, returns all users
+- `GET /users/{id}` - Protected endpoint, returns a specific user
+- `PUT /users/{id}` - Protected endpoint, updates a user
+- `DELETE /users/{id}` - Protected endpoint, deletes a user
 
 ### Authentication
 
@@ -168,7 +257,16 @@ The API uses JWT (JSON Web Token) authentication for protected endpoints. To acc
 2. The response will contain a JWT token:
    ```json
    {
-     "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+     "success": true,
+     "message": "Login successful",
+     "data": {
+       "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+       "user": {
+         "id": 1,
+         "name": "Test User",
+         "email": "user@example.com"
+       }
+     }
    }
    ```
 
@@ -354,54 +452,36 @@ Seeders run automatically after migrations when the Docker container starts. You
 
 ## Running Tests
 
-The project includes PHPUnit tests that can be run within the Docker environment.
+The project includes comprehensive PHPUnit tests for all endpoints and services, satisfying the bonus feature requirement for unit tests.
 
-### Running All Tests
+### Test Coverage
+
+The test suite covers:
+
+- **Authentication**: Login, JWT validation, and protected routes
+- **Stock API**: Stock data retrieval and error handling
+- **User Management**: User creation, retrieval, update, and deletion
+- **History**: Stock query history storage and retrieval
+- **Email System**: Email notification generation and queue integration
+
+### Running Tests
+
+All tests can be run within the Docker environment:
 
 ```bash
+# Run all tests
 docker-compose exec app vendor/bin/phpunit
-```
 
-### Running a Specific Test File
-
-```bash
+# Run a specific test file
 docker-compose exec app vendor/bin/phpunit tests/HelloTest.php
+
+# Run a specific test method
+docker-compose exec app vendor/bin/phpunit --filter testHelloEndpoint tests/HelloTest.php
 ```
 
-### Running Tests with Code Coverage
+### Code Coverage
 
-To generate a code coverage report, you'll need to install Xdebug in your Docker environment first. Add the following to your Dockerfile:
-
-```dockerfile
-# Install Xdebug for code coverage
-RUN pecl install xdebug && docker-php-ext-enable xdebug
-RUN echo "xdebug.mode=coverage" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini
-```
-
-Then rebuild your Docker container:
-
-```bash
-docker-compose down
-docker-compose build app
-docker-compose up -d
-```
-
-Update your phpunit.xml file to include coverage configuration:
-
-```xml
-<coverage>
-    <include>
-        <directory suffix=".php">src</directory>
-    </include>
-    <report>
-        <html outputDirectory="coverage/html"/>
-        <clover outputFile="coverage/clover.xml"/>
-        <text outputFile="php://stdout" showUncoveredFiles="false"/>
-    </report>
-</coverage>
-```
-
-Now you can run tests with code coverage:
+The project is configured for code coverage reporting with Xdebug. To generate a coverage report:
 
 ```bash
 docker-compose exec app vendor/bin/phpunit --coverage-html=coverage
@@ -409,75 +489,100 @@ docker-compose exec app vendor/bin/phpunit --coverage-html=coverage
 
 The coverage report will be generated in the `coverage` directory. You can open `coverage/html/index.html` in your browser to view a detailed coverage report.
 
-### Running a Specific Test Method
-
-```bash
-docker-compose exec app vendor/bin/phpunit --filter testHelloEndpoint tests/HelloTest.php
-```
-
-Available test methods:
-- `testHelloEndpoint` - Tests the public hello endpoint
-- `testByeEndpointThrowsUnauthorized` - Tests that the bye endpoint requires authentication
-- `testByeEndpointWithBasicAuth` - Tests the bye endpoint with valid authentication
-
 ## Project Structure
 
-- `app/` - Application configuration and setup
+The project follows a clean, modular architecture with clear separation of concerns:
+
+### Core Components
+
+- **Controllers** (`src/Controllers/`)
+  - `AuthController.php` - Handles user authentication and JWT token generation
+  - `StockController.php` - Manages stock data retrieval and history endpoints
+  - `UserController.php` - Provides user management functionality
+
+- **Services** (`src/Services/`)
+  - `StockService.php` - Business logic for stock data operations
+  - `StooqApiService.php` - Integration with the Stooq API
+  - `EmailNotificationService.php` - Email notification handling
+  - `MessageQueue.php` - RabbitMQ integration for async processing
+  - `UserService.php` - User management operations
+
+- **Models** (`src/Models/`)
+  - Database entity models using Eloquent ORM
+
+- **Middleware** (`src/Middleware/`)
+  - `JwtMiddleware.php` - JWT authentication and validation
+
+### Configuration and Setup
+
+- **Application Config** (`app/`)
   - `routes.php` - API route definitions
   - `services.php` - Dependency injection container configuration
-- `public/` - Web server entry point
-  - `index.php` - Application entry point
-- `src/Database/Schema/` - Database migration and seeding system
-  - `Migration.php` - Migration interface
-  - `MigrationRunner.php` - Migration execution engine
-  - `Migrations/` - Directory containing migration files
-  - `Seeder.php` - Seeder interface
-  - `SeederRunner.php` - Seeder execution engine
-  - `Seeders/` - Directory containing seeder files
-  - `Commands/MigrateCommand.php` - Migration and seeder command implementation
-  - `swagger-ui.php` - Swagger UI configuration
-- `src/` - Application source code
-  - `Controllers/` - API endpoint controllers
-    - `AuthController.php` - Authentication controller for JWT login
-    - `HelloController.php` - Example controller with protected and public routes
-    - `UserController.php` - User management controller
-  - `Middleware/` - Application middleware
-    - `JwtMiddleware.php` - JWT authentication middleware
-  - `Models/` - Database models
-  - `OpenApi/` - OpenAPI documentation definitions
-- `tests/` - PHPUnit tests
 
-## Development
+- **Database** (`src/Database/`)
+  - Migration and seeding system for database setup
+  - Automated schema creation and initial data seeding
 
-### Rebuilding Containers
+- **API Documentation** (`src/OpenApi/`)
+  - OpenAPI/Swagger definitions for API documentation
 
-If you make changes to the Dockerfile or docker-compose.yml, rebuild the containers:
+- **Tests** (`tests/`)
+  - Comprehensive test suite for all components
+
+## Development Guidelines
+
+### Key Implementation Aspects
+
+- **Docker Containerization**: The application is fully containerized with Docker, making it easy to set up and run in any environment.
+
+- **Dependency Injection**: Services are registered in `app/services.php` and automatically injected where needed.
+
+- **Database Migrations**: Automated database schema creation and seeding for quick setup.
+
+- **API Documentation**: All endpoints are documented with OpenAPI annotations, accessible via Swagger UI.
+
+- **Asynchronous Processing**: Email notifications are handled asynchronously via RabbitMQ.
+
+- **JWT Authentication**: Secure API access with JWT tokens and middleware protection.
+
+### Testing Strategy
+
+The project follows a comprehensive testing approach with:
+
+- **Unit Tests**: Testing individual components in isolation
+- **Integration Tests**: Testing interactions between components
+- **API Tests**: End-to-end testing of API endpoints
+
+### Code Quality Standards
+
+- **PSR Standards**: The codebase follows PSR-1, PSR-4, and PSR-12 coding standards
+- **Type Hinting**: Strict type declarations are used throughout the codebase
+- **Dependency Management**: Composer is used for managing dependencies
+
+## Operational Information
+
+### Container Management
 
 ```bash
+# Rebuild containers after Dockerfile changes
 docker-compose down
 docker-compose up -d --build
-```
 
-### Accessing Logs
-
-View logs from the containers:
-
-```bash
+# View logs from all containers
 docker-compose logs -f
 ```
 
-PHP error logs are available in the `php-errors.log` file in the project root.
+### Extending the Application
 
-## Contributing
+The application follows a modular architecture that makes it easy to extend:
 
-Contributions to this project are welcome. Please follow these steps:
+- **New Endpoints**: Add routes in `app/routes.php` and implement controllers in `src/Controllers/`
+- **New Features**: Create services in `src/Services/` and register them in `app/services.php`
+- **Database Changes**: Add migrations in `src/Database/Schema/Migrations/` and run with `php console migrate`
+- **New Tests**: Add test cases in `tests/` directory following the existing patterns
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Make your changes
-4. Run tests to ensure they pass
-5. Commit your changes (`git commit -m 'Add some amazing feature'`)
-6. Push to the branch (`git push origin feature/amazing-feature`)
-7. Open a Pull Request
+### Troubleshooting
 
-Please ensure your code follows the existing coding style and includes appropriate tests.
+- PHP error logs are available in the `php-errors.log` file in the project root
+- Database connection issues can be resolved by checking the `.env` configuration
+- RabbitMQ connection issues can be verified through the management interface at port 15672

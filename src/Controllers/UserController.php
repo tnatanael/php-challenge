@@ -283,7 +283,23 @@ class UserController
     )]
     #[OA\Response(
         response: 200,
-        description: "User deleted successfully"
+        description: "User deleted successfully",
+        content: new OA\JsonContent(
+            allOf: [
+                new OA\Schema(ref: "#/components/schemas/ApiResponse"),
+                new OA\Schema(properties: [
+                    new OA\Property(
+                        property: "data",
+                        type: "null",
+                        nullable: true
+                    ),
+                    new OA\Property(
+                        property: "message",
+                        example: "User deleted successfully"
+                    )
+                ])
+            ]
+        )
     )]
     #[OA\Response(
         response: 404,
