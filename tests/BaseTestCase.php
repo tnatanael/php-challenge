@@ -73,7 +73,7 @@ class BaseTestCase extends PHPUnit_TestCase
             'iat' => $issuedAt,
             'exp' => $expirationTime,
             'user_id' => 1, // Assuming admin user has ID 1
-            'email' => $_ENV["ADMIN_USERNAME"],
+            'email' => $_ENV["DEFAULT_USERNAME"],
         ];
         
         return JWT::encode($payload, $jwtSecret, 'HS256');

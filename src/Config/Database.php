@@ -102,8 +102,8 @@ class Database
         // Create a default user for testing
         $capsule->table('users')->insert([
             'id' => 1,
-            'email' => $_ENV['ADMIN_USERNAME'] ?? 'user@example.com',
-            'password' => password_hash($_ENV['ADMIN_PASSWORD'] ?? 'secret', PASSWORD_DEFAULT),
+            'email' => $_ENV['DEFAULT_USERNAME'] ?? 'user@example.com',
+            'password' => password_hash($_ENV['DEFAULT_PASSWORD'] ?? 'secret', PASSWORD_DEFAULT),
             'created_at' => date('Y-m-d H:i:s'),
             'updated_at' => date('Y-m-d H:i:s'),
         ]);

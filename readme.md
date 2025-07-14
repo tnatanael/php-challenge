@@ -184,7 +184,7 @@ A default admin user is automatically created during the first application start
 - Email: `user@example.com`
 - Password: `user123`
 
-These credentials are defined in the `.env` file as `ADMIN_USERNAME` and `ADMIN_PASSWORD`.
+These credentials are defined in the `.env` file as `DEFAULT_USERNAME` and `DEFAULT_PASSWORD`.
 
 ## Database Migrations and Seeders
 
