@@ -21,6 +21,13 @@ class EmailConsumer
      */
     public function __construct()
     {        
+        // Check if RabbitMQ is enabled
+        $rmqEnabled = (bool)($_ENV['RMQ_ENABLED'] ?? false);
+        if (!$rmqEnabled) {
+            $this->log("RabbitMQ is disabled. Email consumer will not start.", false);
+            return;
+        }
+        
         // Setup RabbitMQ connection
         $host = $_ENV['RMQ_HOST'] ?? 'localhost';
         $port = (int)($_ENV['RMQ_PORT'] ?? 5672);
@@ -61,6 +68,11 @@ class EmailConsumer
      */
     public function consume(): void
     {        
+        if (!$this->connection || !$this->channel) {
+            $this->log("Cannot consume messages: RabbitMQ connection not established", true);
+            return;
+        }
+        
         $this->log("Waiting for email messages. To exit press CTRL+C");
         
         $callback = function ($msg) {

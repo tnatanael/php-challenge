@@ -173,7 +173,7 @@ The application implements an asynchronous email notification system using Rabbi
    MAILER_ENABLED=1
    
    # RabbitMQ Settings
-   RMQ_ENABLED=1  # Set to 1 to enable RabbitMQ
+   RMQ_ENABLED=1  # Set to 1 to enable the RabbitMQ consumer
    RMQ_HOST=rabbitmq
    RMQ_VHOST=/
    RMQ_PORT=5672

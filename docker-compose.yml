@@ -16,18 +16,19 @@ services:
         condition: service_started
       rabbitmq:
         condition: service_healthy
-    environment:
-      - DB_HOST=mysql
-      - DB_PORT=3306
-      - DB_NAME=stock_app
-      - DB_USERNAME=stock_user
-      - DB_PASSWORD=stock_password
-      - RMQ_ENABLED=1
-      - RMQ_HOST=rabbitmq
-      - RMQ_VHOST=/
-      - RMQ_PORT=5672
-      - RMQ_USERNAME=guest
-      - RMQ_PASSWORD=guest
+    # We need to replace those values in the pipeline for production environment
+    # environment:
+    #   - DB_HOST=mysql
+    #   - DB_PORT=3306
+    #   - DB_NAME=stock_app
+    #   - DB_USERNAME=stock_user
+    #   - DB_PASSWORD=stock_password
+    #   - RMQ_ENABLED=0
+    #   - RMQ_HOST=rabbitmq
+    #   - RMQ_VHOST=/
+    #   - RMQ_PORT=5672
+    #   - RMQ_USERNAME=guest
+    #   - RMQ_PASSWORD=guest
     networks:
       - app-network
 
