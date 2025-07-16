@@ -3,6 +3,8 @@
 /coverage/
 /vendor/
 /logs/*
+/mysql_data/
+/rabbitmq_data/
 .phpunit.result.cache
 .env
 !.env.sample
